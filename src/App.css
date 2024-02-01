@@ -1,8 +1,4 @@
-.map-container {
-  height: 100vh;
-}
-
-.sidebar {
+.floatingElement {
   background-color: rgb(35 55 75 / 90%);
   color: #fff;
   padding: 6px 12px;

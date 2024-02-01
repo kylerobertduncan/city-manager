@@ -30,7 +30,7 @@ let theme = createTheme({
     font-family: 'EB Garamond', serif;
     font-family: 'Lato', sans-serif; (Gill Sans Nova substitute)
     */
-    fontFamily: "Cormorant, serif",
+    fontFamily: "Lato, sans-serif",
     h1: {
       fontFamily: "Bodoni Moda, serif",
     },
@@ -38,7 +38,7 @@ let theme = createTheme({
       fontFamily: "Bodoni Moda, serif",
     },
     body2: {
-      fontFamily: "Lato, sans-serif",
+      fontFamily: "Cormorant, serif",
     }
   },
 });
