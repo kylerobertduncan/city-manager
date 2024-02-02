@@ -3,7 +3,7 @@ import Box from '@mui/material/Box';
 import Button from "@mui/material/Button";
 import Grid from '@mui/material/Grid';
 import Stack from "@mui/material/Stack";
-import Typography from "@mui/material/Typography";
+// import Typography from "@mui/material/Typography";
 import { useRef, useEffect, useState } from 'react';
 
 mapboxgl.accessToken = 'pk.eyJ1Ijoia2lsb3JvbWVvZGVsdGEiLCJhIjoiY2xzMjdrZTFlMDg3eTJycWttNjVic2d5YSJ9.590rhaUsUXBdOYNAbPaHFw';
@@ -30,31 +30,42 @@ export default function Mapbox() {
       const c = map.current.getCenter()
       setMapCenter({lng: c.lng.toFixed(4), lat: c.lat.toFixed(4)});
       setZoom(map.current.getZoom().toFixed(2));
-    })
+    });
   });
 
-  const [trackCursor, setTrackCursor] = useState(false)
-  const [cursorLngLat, setCursorLngLat] = useState({lng: null, lat: null})
+  // look at GeoJson types npm package
 
-  function handleTrackCursor(e: any) {
-    setCursorLngLat({lng: e.lngLat.lng.toFixed(4), lat: e.lngLat.lat.toFixed(4)});
-  }
+  // interface Feature {
+  //   type: string,
+  //   geometry: {
+  //     type: string,
+  //     coordinates: []
+  //   },
+  //   properties: {}
+  // }
 
-  useEffect(() => {
-    console.log("useEffect: trackCursor is", trackCursor);
-    if (trackCursor) {
-      console.log("useEffect: turning on listener");
-      map.current.on("mousemove", handleTrackCursor);
-    }
-    else {
-      console.log("useEffect: turning off listener");
-      map.current.off("mousemove", handleTrackCursor);
-    }
-    
-  }, [trackCursor])
+  // interface FeatureCollection {
+  //   "type": "FeatureCollection",
+  //   "features": [Feature]
+  // }
 
-  function handleAddFeature() {
-    setTrackCursor(!trackCursor);
+  // store click lngLat in state to display (dev only)
+  const [ featureLngLat, setFeatureLngLat ] = useState({lng: 0, lat: 0});
+  // listen for click; get lngLat and save
+  function addPoint() {
+    map.current.once("click", (e:any) => {
+      setFeatureLngLat({ lng: e.lngLat.lng.toFixed(4), lat: e.lngLat.lat.toFixed(4) })
+      // https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage
+      const d = localStorage.getItem("city-manager");
+      console.log(d);
+      // const init = {
+      //   type: "FeatureCollection",
+      //   features: []
+      // }
+      // if (!d) localStorage.setItem("city-manager", init)
+      
+      console.log(localStorage);
+    });
   }
 
   /*
@@ -72,15 +83,13 @@ export default function Mapbox() {
         </Box>
 
         <Box className="floatingElement" sx={{ position:"absolute", top: 0, right: 0 }}>
-          Cursor: Lng: {cursorLngLat.lng} | Lat: {cursorLngLat.lat}
+          Click: Lng: {featureLngLat.lng} | Lat: {featureLngLat.lat}
         </Box>
       
-        {/* Add a button */}
-        {/* On mouse click, save the coordinates as a GeoJSON feature in localStorage */}
         <Stack alignItems="center" className="floatingElement" direction="row" spacing={2} sx={{ position:"absolute", bottom: 0, left: "50%", translate:"-50%" }}>
-          <Button onClick={handleAddFeature} variant="outlined">
-            Add Feature
-          </Button>
+          {/* On mouse click, save the coordinates as a GeoJSON feature in localStorage */}
+          <Button onClick={addPoint} variant="outlined">Add Point</Button>
+          <Button variant="outlined">Add Polygon</Button>
         </Stack>
 
       </Box>
