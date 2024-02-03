@@ -6,6 +6,8 @@ import Stack from "@mui/material/Stack";
 // import Typography from "@mui/material/Typography";
 import { useRef, useEffect, useState } from 'react';
 
+import { addPointFeature, getLocalStorage } from "../utils/localStorage";
+
 mapboxgl.accessToken = 'pk.eyJ1Ijoia2lsb3JvbWVvZGVsdGEiLCJhIjoiY2xzMjdrZTFlMDg3eTJycWttNjVic2d5YSJ9.590rhaUsUXBdOYNAbPaHFw';
 
 export default function Mapbox() {
@@ -31,23 +33,11 @@ export default function Mapbox() {
       setMapCenter({lng: c.lng.toFixed(4), lat: c.lat.toFixed(4)});
       setZoom(map.current.getZoom().toFixed(2));
     });
+    // get local storage object
+    console.log(getLocalStorage());
+    
   });
 
-  // look at GeoJson types npm package
-
-  // interface Feature {
-  //   type: string,
-  //   geometry: {
-  //     type: string,
-  //     coordinates: []
-  //   },
-  //   properties: {}
-  // }
-
-  // interface FeatureCollection {
-  //   "type": "FeatureCollection",
-  //   "features": [Feature]
-  // }
 
   // store click lngLat in state to display (dev only)
   const [ featureLngLat, setFeatureLngLat ] = useState({lng: 0, lat: 0});
@@ -55,16 +45,7 @@ export default function Mapbox() {
   function addPoint() {
     map.current.once("click", (e:any) => {
       setFeatureLngLat({ lng: e.lngLat.lng.toFixed(4), lat: e.lngLat.lat.toFixed(4) })
-      // https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage
-      const d = localStorage.getItem("city-manager");
-      console.log(d);
-      // const init = {
-      //   type: "FeatureCollection",
-      //   features: []
-      // }
-      // if (!d) localStorage.setItem("city-manager", init)
-      
-      console.log(localStorage);
+      addPointFeature(featureLngLat);
     });
   }
 
