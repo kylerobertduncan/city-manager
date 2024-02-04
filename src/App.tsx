@@ -1,13 +1,13 @@
 import './App.css';
 import Grid from '@mui/material/Grid';
-import Mapbox from './components/Mapbox';
+import MapWindow from './components/MapWindow';
 import Sidebar from './components/Sidebar';
 
 function App() {
 
   return (
     <Grid container className="App">
-      <Mapbox />
+      <MapWindow />
       <Sidebar />
     </Grid>
   );

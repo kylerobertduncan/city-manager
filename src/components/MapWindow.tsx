@@ -4,13 +4,16 @@ import Button from "@mui/material/Button";
 import Grid from '@mui/material/Grid';
 import Stack from "@mui/material/Stack";
 // import Typography from "@mui/material/Typography";
+
 import { useRef, useEffect, useState } from 'react';
 
-import { addPointFeature, getLocalStorage } from "../utils/localStorage";
+import { addPointFeature, getLocalStorage, clearLocalStorage } from "../utils/localStorage";
+import { addSource, addLayer, zoomToAll } from "../utils/mapbox";
 
-mapboxgl.accessToken = 'pk.eyJ1Ijoia2lsb3JvbWVvZGVsdGEiLCJhIjoiY2xzMjdrZTFlMDg3eTJycWttNjVic2d5YSJ9.590rhaUsUXBdOYNAbPaHFw';
+// add url restrictions before releasing production: https://docs.mapbox.com/accounts/guides/tokens/#url-restrictions
+mapboxgl.accessToken = (process.env.REACT_APP_MAPBOX_API_KEY as string);
 
-export default function Mapbox() {
+export default function MapWindow() {
   const mapContainer: any = useRef(null);
   const map: any = useRef(null);
   const [zoom, setZoom] = useState(11);
@@ -34,8 +37,14 @@ export default function Mapbox() {
       setZoom(map.current.getZoom().toFixed(2));
     });
     // get local storage object
-    console.log(getLocalStorage());
-    
+    console.log("current data in storage:", getLocalStorage());
+    // On load, check localStorage for any existing features
+    // If present, add them to the map
+    map.current.on("load", () => {
+      addSource(map.current);
+      addLayer(map.current);
+      zoomToAll(map.current);
+    })
   });
 
 
@@ -43,16 +52,8 @@ export default function Mapbox() {
   const [ featureLngLat, setFeatureLngLat ] = useState({lng: 0, lat: 0});
   // listen for click; get lngLat and save
   function addPoint() {
-    map.current.once("click", (e:any) => {
-      setFeatureLngLat({ lng: e.lngLat.lng.toFixed(4), lat: e.lngLat.lat.toFixed(4) })
-      addPointFeature(featureLngLat);
-    });
+    map.current.once("click", (e:mapboxgl.EventData) => addPointFeature(e.lngLat));
   }
-
-  /*
-  On load, check localStorage for any existing features
-  If present, add them to the map
-  */
 
   return(
     <Grid component="main" item xs={12} lg={9}>
@@ -71,6 +72,7 @@ export default function Mapbox() {
           {/* On mouse click, save the coordinates as a GeoJSON feature in localStorage */}
           <Button onClick={addPoint} variant="outlined">Add Point</Button>
           <Button variant="outlined">Add Polygon</Button>
+          <Button onClick={clearLocalStorage} variant="outlined">Delete All</Button>
         </Stack>
 
       </Box>
