@@ -24,21 +24,15 @@ export function addLayer(map: mapboxgl.Map) {
     paint: {
       "circle-color": "blue"
     }
-  })
+  }, "road-label");
 }
 
 export function zoomToAll(map: mapboxgl.Map) {
   const data:GeoJSON.FeatureCollection = getLocalStorage();
-  console.log("bbox data:", data);
-  if (!data.features.length) {
-    return;
-  }
-  const box:GeoJSON.BBox = bbox(data);
+  if (!data.features.length) return;
+  // const box:mapboxgl.LngLatBoundsLike | GeoJSON.BBox = bbox(data);
+  const box = bbox(data);
   // const bounds:mapboxgl.LngLatBoundsLike = box.map(b => { return b});
-  box.forEach(b => {
-    console.log("bbox box:", b, typeof(b));
-    // if (bounds.length > 3) return;
-  });
-
-  // map.fitBounds(bounds, {});
+  
+  map.fitBounds(box, {});
 }

@@ -37,13 +37,15 @@ export default function MapWindow() {
       setZoom(map.current.getZoom().toFixed(2));
     });
     // get local storage object
-    console.log("current data in storage:", getLocalStorage());
+    console.log("current storage on page load:", getLocalStorage());
     // On load, check localStorage for any existing features
     // If present, add them to the map
     map.current.on("load", () => {
       addSource(map.current);
       addLayer(map.current);
       zoomToAll(map.current);
+      // console.log("map styles (inc. layers):", map.current.getStyle());
+      
     })
   });
 

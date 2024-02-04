@@ -10,8 +10,6 @@ function setupLocalStorage() {
     type: "FeatureCollection",
     features: []
   }
-  console.log("empty data:", emptyData);
-  
   // add the (stringified) empty data to local storage
   localStorage.setItem(localStorageName, JSON.stringify(emptyData));
   // retrieve the data to ensure it's been stored
@@ -24,12 +22,9 @@ function setupLocalStorage() {
 
 export function getLocalStorage() {
   const existingData = localStorage.getItem(localStorageName);
-  if (existingData) {
-    return JSON.parse(existingData)
-  } else {
+  if (existingData) return JSON.parse(existingData)
+  else {
     const newData = setupLocalStorage();
-    console.log(newData);
-    
     if (newData) return JSON.parse(newData);
   }
 }
@@ -37,7 +32,6 @@ export function getLocalStorage() {
 // add a test to check that new localStorage matches updated object?
 function updateLocalStorage(f: GeoJSON.FeatureCollection) {
   localStorage.setItem(localStorageName, JSON.stringify(f));
-  console.log("localStorage updated:", f);
 }
 
 export function addPointFeature(c:{lng:number, lat:number}) {
