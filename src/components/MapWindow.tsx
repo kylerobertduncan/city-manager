@@ -13,9 +13,9 @@ import { addSource, addLayer, zoomToAll } from "../utils/mapbox";
 // add url restrictions before releasing production: https://docs.mapbox.com/accounts/guides/tokens/#url-restrictions
 mapboxgl.accessToken = (process.env.REACT_APP_MAPBOX_API_KEY as string);
 
-export default function MapWindow() {
+export default function MapWindow({data}:{data:GeoJSON.FeatureCollection}) {
   const mapContainer: any = useRef(null);
-  const map: any = useRef(null);
+  const map: any = useRef(null);  
   const [zoom, setZoom] = useState(11);
 
   const [mapCenter, setMapCenter] = useState({lng: -79.35, lat: 43.68})
@@ -37,7 +37,7 @@ export default function MapWindow() {
       setZoom(map.current.getZoom().toFixed(2));
     });
     // get local storage object
-    console.log("current storage on page load:", getLocalStorage());
+    // console.log("current storage on page load:", getLocalStorage());
     // On load, check localStorage for any existing features
     // If present, add them to the map
     map.current.on("load", () => {
@@ -47,7 +47,6 @@ export default function MapWindow() {
       // console.log("map styles (inc. layers):", map.current.getStyle());
     });
   });
-
 
   // store click lngLat in state to display (dev only)
   const [ featureLngLat, setFeatureLngLat ] = useState({lng: 0, lat: 0});

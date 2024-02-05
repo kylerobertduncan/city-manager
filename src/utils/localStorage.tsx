@@ -56,7 +56,7 @@ export function addPointFeature(c:{lng:number, lat:number}) {
 
 export function clearLocalStorage() {
   const confirmed = window.confirm("This will erase all your data. Are you sure you want to continue?")
-  if (confirmed) localStorage.clear();
+  if (confirmed) localStorage.removeItem(localStorageName);
   setupLocalStorage();
 }
 
