@@ -43,10 +43,9 @@ export default function MapWindow() {
     map.current.on("load", () => {
       addSource(map.current);
       addLayer(map.current);
-      zoomToAll(map.current);
+      // zoomToAll(map.current);
       // console.log("map styles (inc. layers):", map.current.getStyle());
-      
-    })
+    });
   });
 
 

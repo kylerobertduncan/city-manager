@@ -30,9 +30,8 @@ export function addLayer(map: mapboxgl.Map) {
 export function zoomToAll(map: mapboxgl.Map) {
   const data:GeoJSON.FeatureCollection = getLocalStorage();
   if (!data.features.length) return;
-  // const box:mapboxgl.LngLatBoundsLike | GeoJSON.BBox = bbox(data);
   const box = bbox(data);
+  // const box:mapboxgl.LngLatBoundsLike | GeoJSON.BBox = bbox(data);
   // const bounds:mapboxgl.LngLatBoundsLike = box.map(b => { return b});
-  
-  map.fitBounds(box, {});
+  // map.fitBounds(box, {});
 }
