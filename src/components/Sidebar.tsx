@@ -8,7 +8,7 @@ On load, check localStorage for any existing features
 If present, add them to the sidebar
 */
 
-export default function Sidebar({data}:{data:GeoJSON.FeatureCollection}) {
+export default function Sidebar() {
   return(
     <Grid item component="aside" xs={12} lg={3}>
       <SidebarHeader />
