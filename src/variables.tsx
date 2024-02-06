@@ -2,3 +2,4 @@
 export const localStorageId: string = "prince";
 export const mapboxSourceId: string = "prince-source";
 export const mapboxLayerId: string = "prince-layer";
+export const mapboxPolygonLayerId: string = "prince-polygon-layer";

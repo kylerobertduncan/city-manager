@@ -1,6 +1,8 @@
 // mapboxgl and react hooks
 import mapboxgl from "mapbox-gl";
 import { useEffect, useRef, useState } from "react";
+import { v4 as uuid } from "uuid";
+
 // import material ui components
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -72,6 +74,11 @@ export default function App() {
 		}
 	}, []);
 
+	function refreshSourceData() {
+		if (map.current.loaded()) addDataToMap();
+		else map.current.on("load", addDataToMap);
+	}
+
 	// update localStorage and Mapbox when data in state changes
 	useEffect(() => {
 		// if features are empty, do nothing
@@ -81,8 +88,7 @@ export default function App() {
 			const s = JSON.stringify(geojsonData);
 			if (s) localStorage.setItem(localStorageId, s);
 			// update mapbox data
-			if (map.current.loaded()) addDataToMap();
-			else map.current.on("load", addDataToMap);
+			refreshSourceData();
 			// catch and report any errors
 		} catch (error: any) {
 			console.error("Error updating localStorage:", error.message);
@@ -108,13 +114,18 @@ export default function App() {
 			localStorageId,
 			JSON.stringify(emptyFeatureCollection)
 		);
+		setGeojsonData(emptyFeatureCollection);
 	}
 
 	function addDataToMap() {
+		// if the geojson is empty, don't try to load data
 		if (!geojsonData.features.length) return;
+		// get the mapbox source
 		const s = map.current.getSource(mapboxSourceId);
+		// if already in place, set updated data
 		if (s) {
 			s.setData(geojsonData);
+			// otherwise add source and layer to mapbox
 		} else {
 			map.current.addSource(mapboxSourceId, {
 				type: "geojson",
@@ -151,7 +162,15 @@ export default function App() {
 					type: "Point",
 					coordinates: [e.lngLat.lng, e.lngLat.lat],
 				},
-				properties: {},
+				properties: {
+					address: "",
+					color: "",
+					created: Date.now(),
+					id: uuid(),
+					name: "",
+					notes: [],
+					tags: [],
+				},
 			};
 			// rebuild data with new feature
 			const newData = { ...geojsonData };
@@ -167,7 +186,14 @@ export default function App() {
 	return (
 		<Grid container className="App">
 			{/* MapWindow */}
-			<Grid component="main" item xs={12} lg={9} sx={{ position: "relative" }}>
+			<Grid
+				component="main"
+				item
+				xs={12}
+				md={8}
+				lg={9}
+				sx={{ position: "relative" }}
+			>
 				{/* Mapbox container */}
 				<Box
 					className="map-container"
@@ -219,7 +245,7 @@ export default function App() {
 			</Grid>
 
 			{/* Sidebar */}
-			<Sidebar />
+			<Sidebar geojsonData={geojsonData} />
 		</Grid>
 	);
 }
