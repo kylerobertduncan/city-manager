@@ -18,9 +18,9 @@ import { createTheme } from "@mui/material/styles";
 
 // A custom theme for this app
 let theme = createTheme({
-  palette: { mode: 'dark' },
-  typography: {
-    /*
+	palette: { mode: "dark" },
+	typography: {
+		/*
     The main font, used for the section titles is called BondiSvtyITCTT-Bold
     "Name", "Player", etc is a version of Cormorant as is most of the other fonts on the official sheet
     Health, Willpower, etc is Gill Sans.  
@@ -30,17 +30,17 @@ let theme = createTheme({
     font-family: 'EB Garamond', serif;
     font-family: 'Lato', sans-serif; (Gill Sans Nova substitute)
     */
-    fontFamily: "Lato, sans-serif",
-    h1: {
-      fontFamily: "Bodoni Moda, serif",
-    },
-    h2: {
-      fontFamily: "Bodoni Moda, serif",
-    },
-    body2: {
-      fontFamily: "Cormorant, serif",
-    }
-  },
+		fontFamily: "Lato, sans-serif",
+		h1: {
+			fontFamily: "Bodoni Moda, serif",
+		},
+		h2: {
+			fontFamily: "Bodoni Moda, serif",
+		},
+		body2: {
+			fontFamily: "Cormorant, serif",
+		},
+	},
 });
 
 // adds responsive font sizes for mobile
