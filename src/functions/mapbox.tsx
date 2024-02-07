@@ -1,13 +1,35 @@
 import { v4 as uuid } from "uuid";
 import { mapboxLayerId, mapboxSourceId } from "../variables";
 
+function initializeMapData(
+	geojsonData: GeoJSON.FeatureCollection,
+	map: mapboxgl.Map
+) {
+	map.addSource(mapboxSourceId, {
+		type: "geojson",
+		data: geojsonData,
+	});
+	map.addLayer(
+		{
+			id: mapboxLayerId,
+			source: mapboxSourceId,
+			type: "circle",
+			paint: {
+				"circle-color": "red",
+			},
+		},
+		"road-label"
+	);
+}
+
 function addDataToMap(
 	geojsonData: GeoJSON.FeatureCollection,
-	map: any
+	map: mapboxgl.Map
 ) {
 	// get the mapbox source
 	const s = map.getSource(mapboxSourceId);
-  // if already in place, set updated data
+  if (s.type !== "geojson") return;
+	// if already in place, set updated data
 	if (s) {
 		s.setData(geojsonData);
 		// otherwise add source and layer to mapbox
@@ -67,4 +89,18 @@ function addPoint(map:mapboxgl.Map) {
 		// return cursor to default
 		map.getCanvas().style.cursor = "";
 	});
+}
+
+function addPointLayer(map: mapboxgl.Map) {
+  map.addLayer(
+		{
+			id: mapboxLayerId,
+			source: mapboxSourceId,
+			type: "circle",
+			paint: {
+				"circle-color": "red",
+			},
+		},
+		"road-label"
+	);
 }
