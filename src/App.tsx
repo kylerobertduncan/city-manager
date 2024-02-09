@@ -34,8 +34,8 @@ export default function App() {
 	const [geojsonData, setGeojsonData] = useState<GeoJSON.FeatureCollection>(
 		emptyFeatureCollection
 	);
-  
-  // initialize map once on page load;
+
+	// initialize map once on page load;
 	useEffect(() => {
 		if (map.current) return;
 		// initialize new map
@@ -52,15 +52,18 @@ export default function App() {
 			setZoom(map.current.getZoom());
 		});
 		// add data in state to map on load
-		// map.current.on("load", () => {});
+		// map.current.on("load", () => {
+      // });
+    initializeLocalStorage();
 	});
 
 	// store geojson data in state on page load
-	useEffect(() => {
+	function initializeLocalStorage() {
 		// get item from localStorage,
 		const item = localStorage.getItem(localStorageId);
 		// it no item, reset storage to create empty feature collection item
-		if (!item) clearAllData(); // what if localStorage is lost (cache cleared) but data is still active state? Worth preserving state?
+		if (!item) clearAllData();
+    // what if localStorage is lost (cache cleared) but data is still active state? Worth preserving state?
 		try {
 			if (!item) return;
 			const data: GeoJSON.FeatureCollection = JSON.parse(item);
@@ -69,16 +72,33 @@ export default function App() {
 			// Handle the error here
 			console.error("Error loading data from localStorage:", error.message);
 			clearAllData();
-		} 
-	}, []);
+		}
+	}
+
+	// store geojson data in state on page load
+	// useEffect(() => {
+	// 	// get item from localStorage,
+	// 	const item = localStorage.getItem(localStorageId);
+	// 	// it no item, reset storage to create empty feature collection item
+	// 	if (!item) clearAllData(); // what if localStorage is lost (cache cleared) but data is still active state? Worth preserving state?
+	// 	try {
+	// 		if (!item) return;
+	// 		const data: GeoJSON.FeatureCollection = JSON.parse(item);
+	// 		if (data) setGeojsonData(data);
+	// 	} catch (error: any) {
+	// 		// Handle the error here
+	// 		console.error("Error loading data from localStorage:", error.message);
+	// 		clearAllData();
+	// 	}
+	// }, []);
 
 	// update localStorage and Mapbox when data in state changes
 	useEffect(() => {
-		// if features are empty, do nothing
+    console.log("geojsonData has updated:", geojsonData.features.length);
+    // if features are empty, do nothing
 		// *!* stops localStorage being replaced with empty data on load
 		// *!* but also stops map data from refreshing when data is cleared
 		if (!geojsonData.features.length) return;
-
 		// convert current data to a string and update localStorage
 		try {
 			const s = JSON.stringify(geojsonData);
@@ -93,40 +113,50 @@ export default function App() {
 
 	// create source and add layers to mapbox
 	function loadMapboxData() {
-    map.current.addSource(mapboxSourceId, {
-      type: "geojson",
-      data: geojsonData,
-    });
-    addPointLayer()
+		map.current.addSource(mapboxSourceId, {
+			type: "geojson",
+			data: geojsonData,
+		});
+		addPointLayer();
 	}
-  // abstract to another document? Or loop layers and properties from an import
-  function addPointLayer() {
-    map.current.addLayer(
-      {
-        id: mapboxLayerId,
-        source: mapboxSourceId,
-        type: "circle",
-        paint: {
-          "circle-color": "red",
-        },
-      },
-      "road-label"
-    );
-  }
-
+	// abstract to another document? Or loop layers and properties from an import
+	function addPointLayer() {
+		map.current.addLayer(
+			{
+				id: mapboxLayerId,
+				source: mapboxSourceId,
+				type: "circle",
+				paint: {
+					"circle-color": "red",
+				},
+			},
+			"road-label"
+		);
+	}
 
 	function updateMapboxData() {
-    if (map.current.loaded()) {
-      const s = map.current.getSource(mapboxSourceId);
-      if (s) s.setData(geojsonData)
-    }
-    else map.current.on("load", loadMapboxData);
+    console.log("updateMapboxData function called");
+    console.log("geojson features:", geojsonData.features.length);
+    
+		if (map.current.loaded()) {
+			const s = map.current.getSource(mapboxSourceId);
+
+			// if (!geojsonData.features.length) {
+			// 	if (map.current.getLayer(mapboxLayerId))
+			// 		map.current.removeLayer(mapboxLayerId);
+			// }
+			if (s) {
+        s.setData(geojsonData);
+        // if (!map.current.getLayer(mapboxLayerId)) addPointLayer()
+      }
+
+		} else map.current.on("load", loadMapboxData);
 	}
 
 	function clearAllData() {
 		if (!window.confirm("Erase all data?")) return;
-		
-    // reset data in state
+
+		// reset data in state
 		setGeojsonData(emptyFeatureCollection);
 
 		// clear localStorage
@@ -140,7 +170,7 @@ export default function App() {
 		);
 
 		// update mapbox data
-    updateMapboxData();
+		updateMapboxData();
 	}
 
 	// store click lngLat in state to display (dev only)
