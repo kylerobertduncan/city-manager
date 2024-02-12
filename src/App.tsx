@@ -2,18 +2,16 @@
 import mapboxgl from "mapbox-gl";
 import { useEffect, useRef, useState } from "react";
 import { v4 as uuid } from "uuid";
-
 // import material ui components
 import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
 import Grid from "@mui/material/Grid";
-import Stack from "@mui/material/Stack";
 // import styles
 import "./App.css";
 // import components
 import Sidebar from "./components/Sidebar";
 // import other local modules
 import { localStorageId, mapboxLayerId, mapboxSourceId } from "./variables";
+import Toolbar from "./components/Toolbar";
 
 // add url restrictions before releasing production
 // https://docs.mapbox.com/accounts/guides/tokens/#url-restrictions
@@ -35,8 +33,8 @@ export default function App() {
 		emptyFeatureCollection
 	);
 
-	// initialize map once on page load;
-	useEffect(() => {
+  // extrapolate map and functions to a separate class module?
+	function mapboxInit() {
 		if (map.current) return;
 		// initialize new map
 		map.current = new mapboxgl.Map({
@@ -51,76 +49,20 @@ export default function App() {
 			setMapCenter({ lng: c.lng, lat: c.lat });
 			setZoom(map.current.getZoom());
 		});
-		// add data in state to map on load
-		// map.current.on("load", () => {
-      // });
-    initializeLocalStorage();
-	});
-
-	// store geojson data in state on page load
-	function initializeLocalStorage() {
-		// get item from localStorage,
-		const item = localStorage.getItem(localStorageId);
-		// it no item, reset storage to create empty feature collection item
-		if (!item) clearAllData();
-    // what if localStorage is lost (cache cleared) but data is still active state? Worth preserving state?
-		try {
-			if (!item) return;
-			const data: GeoJSON.FeatureCollection = JSON.parse(item);
-			if (data) setGeojsonData(data);
-		} catch (error: any) {
-			// Handle the error here
-			console.error("Error loading data from localStorage:", error.message);
-			clearAllData();
-		}
 	}
 
-	// store geojson data in state on page load
-	// useEffect(() => {
-	// 	// get item from localStorage,
-	// 	const item = localStorage.getItem(localStorageId);
-	// 	// it no item, reset storage to create empty feature collection item
-	// 	if (!item) clearAllData(); // what if localStorage is lost (cache cleared) but data is still active state? Worth preserving state?
-	// 	try {
-	// 		if (!item) return;
-	// 		const data: GeoJSON.FeatureCollection = JSON.parse(item);
-	// 		if (data) setGeojsonData(data);
-	// 	} catch (error: any) {
-	// 		// Handle the error here
-	// 		console.error("Error loading data from localStorage:", error.message);
-	// 		clearAllData();
-	// 	}
-	// }, []);
-
-	// update localStorage and Mapbox when data in state changes
-	useEffect(() => {
-    console.log("geojsonData has updated:", geojsonData.features.length);
-    // if features are empty, do nothing
-		// *!* stops localStorage being replaced with empty data on load
-		// *!* but also stops map data from refreshing when data is cleared
-		if (!geojsonData.features.length) return;
-		// convert current data to a string and update localStorage
-		try {
-			const s = JSON.stringify(geojsonData);
-			if (s) localStorage.setItem(localStorageId, s);
-			// catch and report any errors
-		} catch (error: any) {
-			console.error("Error updating localStorage:", error.message);
-		}
-		// update mapbox data
-		updateMapboxData();
-	}, [geojsonData]);
-
-	// create source and add layers to mapbox
-	function loadMapboxData() {
+	function mapboxAddSource() {
+		if (map.current.getSource(mapboxSourceId)) return;
+		// add source
 		map.current.addSource(mapboxSourceId, {
 			type: "geojson",
 			data: geojsonData,
 		});
-		addPointLayer();
 	}
-	// abstract to another document? Or loop layers and properties from an import
-	function addPointLayer() {
+
+	function mapboxAddLayer() {
+		if (map.current.getLayer(mapboxLayerId)) return;
+		// add layer
 		map.current.addLayer(
 			{
 				id: mapboxLayerId,
@@ -134,55 +76,86 @@ export default function App() {
 		);
 	}
 
-	function updateMapboxData() {
-    console.log("updateMapboxData function called");
-    console.log("geojson features:", geojsonData.features.length);
-    
-		if (map.current.loaded()) {
-			const s = map.current.getSource(mapboxSourceId);
-
-			// if (!geojsonData.features.length) {
-			// 	if (map.current.getLayer(mapboxLayerId))
-			// 		map.current.removeLayer(mapboxLayerId);
-			// }
-			if (s) {
-        s.setData(geojsonData);
-        // if (!map.current.getLayer(mapboxLayerId)) addPointLayer()
-      }
-
-		} else map.current.on("load", loadMapboxData);
+	function mapboxSetData() {
+		const s = map.current.getSource(mapboxSourceId);
+		s.setData(geojsonData);
 	}
 
-	function clearAllData() {
-		if (!window.confirm("Erase all data?")) return;
+  function handleSourcedata(e:mapboxgl.EventData) {
+    if (e.sourceId === mapboxSourceId && e.isSourceLoaded) {
+			map.current.off("sourcedata", handleSourcedata);
+			mapboxSetData();
+		}
+  }
 
-		// reset data in state
-		setGeojsonData(emptyFeatureCollection);
+	function mapboxUpdateData() {
+    if (
+			map.current.getSource(mapboxSourceId) &&
+			map.current.isSourceLoaded(mapboxSourceId)
+		) mapboxSetData();
+    // Fired when one of the map's sources loads or changes
+		else map.current.on("sourcedata", handleSourcedata);
+	}
 
-		// clear localStorage
-		// check for an existing item and if present, remove it
-		if (localStorage.getItem(localStorageId))
-			localStorage.removeItem(localStorageId);
-		// add an item with an empty feature collection
-		localStorage.setItem(
-			localStorageId,
-			JSON.stringify(emptyFeatureCollection)
-		);
+	function mapboxSetup() {
+		// if no map initialise map
+		if (!map.current) mapboxInit();
+		// if map not loaded, re-run when loaded
+		if (!map.current.loaded()) map.current.on("load", mapboxSetup);
+		if (!map.current.isStyleLoaded()) return;
+		// if source not loaded, load source
+		if (!map.current.getSource(mapboxSourceId)) mapboxAddSource();
+		// if layer(s) not loaded, load layer(s)
+		if (!map.current.getLayer(mapboxLayerId)) mapboxAddLayer();
+	}
 
+	// store geojson data in state on page load
+	function initializeLocalStorage() {
+		// get item from localStorage,
+		const item = localStorage.getItem(localStorageId);
+		// it no item, reset storage to create empty feature collection item
+		// if (!item) clearAllData();
+		// what if localStorage is lost (cache cleared) but data is still present in state? Worth preserving state?
+		try {
+			if (!item) return;
+			const data: GeoJSON.FeatureCollection = JSON.parse(item);
+			if (data) setGeojsonData(data);
+		} catch (error: any) {
+			// Handle the error here
+			console.error("Error loading data from localStorage:", error.message);
+			clearAllData();
+		}
+	}
+
+	// get local storage and initialize map once on page load
+	useEffect(() => {
+		initializeLocalStorage();
+		mapboxSetup();
+	}, []);
+
+	// update localStorage and Mapbox when data in state changes
+	useEffect(() => {
+		if (!geojsonData.features.length) return;
+		// convert current data to a string and update localStorage
+		try {
+			const s = JSON.stringify(geojsonData);
+			if (s) localStorage.setItem(localStorageId, s);
+			// catch and report any errors
+		} catch (error: any) {
+			console.error("Error updating localStorage:", error.message);
+		}
 		// update mapbox data
-		updateMapboxData();
-	}
+		mapboxUpdateData();
+	}, [geojsonData]);
 
-	// store click lngLat in state to display (dev only)
-	const [featureLngLat, setFeatureLngLat] = useState({ lng: 0, lat: 0 });
-	// listen for click; get lngLat and save
+	/* USER FUNCTIONS */
+
+  // add a point feature to the map (and data)
 	function addPoint() {
 		// set cursor to a pointer
 		map.current.getCanvas().style.cursor = "pointer";
 		// listen for the users click
 		map.current.once("click", (e: mapboxgl.EventData) => {
-			// set data for dev display
-			setFeatureLngLat(e.lngLat);
 			// create new feature
 			const newPoint: GeoJSON.Feature = {
 				type: "Feature",
@@ -205,10 +178,25 @@ export default function App() {
 			newData.features.push(newPoint);
 			// update data in state
 			setGeojsonData(newData);
-
 			// return cursor to default
 			map.current.getCanvas().style.cursor = "";
 		});
+	}
+
+  // erase all data
+	function clearAllData() {
+		if (!window.confirm("Erase all data?")) return;
+		// update mapbox data with an empty feature collection
+		const s = map.current.getSource(mapboxSourceId);
+		if (!s) return;
+		s.setData(emptyFeatureCollection);
+    // replace localStorage item with an empty feature collection
+		localStorage.setItem(
+			localStorageId,
+			JSON.stringify(emptyFeatureCollection)
+		);
+		// reset data in state with an empty feature collection
+		setGeojsonData(emptyFeatureCollection);
 	}
 
 	return (
@@ -239,37 +227,9 @@ export default function App() {
 					{mapCenter.lat.toFixed(4)} | Zoom: {zoom.toFixed(2)}
 				</Box>
 
-				{/* clickLngLat readout for dev only */}
-				<Box
-					className="floatingElement"
-					sx={{ position: "absolute", top: 0, right: 0 }}
-				>
-					Click: Lng: {featureLngLat.lng.toFixed(4)} | Lat:{" "}
-					{featureLngLat.lat.toFixed(4)}
-				</Box>
-
 				{/* Toolbar */}
-				<Stack
-					alignItems="center"
-					direction="row"
-					paddingY="12px"
-					spacing={2}
-					sx={{
-						position: "absolute",
-						bottom: 0,
-						left: "50%",
-						translate: "-50%",
-					}}
-				>
-					{/* On mouse click, save the coordinates as a GeoJSON feature in localStorage */}
-					<Button onClick={addPoint} variant="outlined">
-						Add Point
-					</Button>
-					{/* <Button variant="outlined">Add Polygon</Button> */}
-					<Button onClick={clearAllData} variant="outlined">
-						Clear Data
-					</Button>
-				</Stack>
+			  <Toolbar addPoint={addPoint} clearAllData={clearAllData} />
+
 			</Grid>
 
 			{/* Sidebar */}
