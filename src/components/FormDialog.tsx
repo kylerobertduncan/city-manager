@@ -8,58 +8,81 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
 
-export default function FormDialog() {
-	const [open, setOpen] = useState(false);
+export default function FormDialog({ addFeature, title }: { addFeature: () => void, title: string }) {
+	// setup dialog handlers
+  const [open, setOpen] = useState(false);
+	const openDialog = () => setOpen(true);
+	const closeDialog = () => setOpen(false);
 
-	const handleClickOpen = () => {
-		setOpen(true);
-	};
+  // listen for initial click
+  const handleClick = () => {
 
-	const handleClose = () => {
-		setOpen(false);
-	};
+  }
 
 	return (
 		<>
-			<Button variant="outlined" onClick={handleClickOpen}>
-				Open form dialog
+			<Button variant="outlined" onClick={openDialog}>
+				{title}
 			</Button>
+
 			<Dialog
 				open={open}
-				onClose={handleClose}
+				onClose={closeDialog}
 				PaperProps={{
 					component: "form",
 					onSubmit: (event: React.FormEvent<HTMLFormElement>) => {
 						event.preventDefault();
 						const formData = new FormData(event.currentTarget);
 						const formJson = Object.fromEntries((formData as any).entries());
-						const email = formJson.email;
-						console.log(email);
-						handleClose();
+						console.log(formJson);
+            addFeature();
+						closeDialog();
 					},
 				}}
 			>
-				<DialogTitle>Subscribe</DialogTitle>
+				<DialogTitle component="h2" variant="h3">
+					{title}
+				</DialogTitle>
+
 				<DialogContent>
 					<DialogContentText>
-						To subscribe to this website, please enter your email address here.
-						We will send updates occasionally.
+						Enter the details of your new feature:
 					</DialogContentText>
+
 					<TextField
 						autoFocus
 						required
 						margin="dense"
 						id="name"
-						name="email"
-						label="Email Address"
-						type="email"
+						name="name"
+						label="Name"
 						fullWidth
-						variant="standard"
+					/>
+					<TextField
+						margin="dense"
+						id="tags"
+						name="tags"
+						label="Tags"
+						fullWidth
+					/>
+					<TextField
+						multiline
+						margin="dense"
+						id="notes"
+						name="notes"
+						label="Notes"
+						fullWidth
+						minRows={3}
 					/>
 				</DialogContent>
+
 				<DialogActions>
-					<Button onClick={handleClose}>Cancel</Button>
-					<Button type="submit">Subscribe</Button>
+					<Button type="submit" variant="outlined">
+						Add Feature
+					</Button>
+					<Button onClick={closeDialog} variant="outlined">
+						Cancel
+					</Button>
 				</DialogActions>
 			</Dialog>
 		</>

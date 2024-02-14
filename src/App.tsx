@@ -33,6 +33,21 @@ export default function App() {
 		emptyFeatureCollection
 	);
 
+  // possible alternative to useEffect with geojsonData dependency (i.e. call instead of setGeojsonData)
+  function updateGeojsonData(newData:GeoJSON.FeatureCollection) {
+		// convert current data to a string and update localStorage
+		try {
+			const s = JSON.stringify(newData);
+			if (s) localStorage.setItem(localStorageId, s);
+			// catch and report any errors
+		} catch (error: any) {
+			console.error("Error updating localStorage:", error.message);
+		}
+    setGeojsonData(newData);
+		// update mapbox data
+		mapboxUpdateData();
+	}
+
   // extrapolate map and functions to a separate class module?
 	function mapboxInit() {
 		if (map.current) return;
