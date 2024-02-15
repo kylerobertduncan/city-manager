@@ -8,21 +8,25 @@ export default function FeatureCard({
 	featureData: GeoJSON.Feature;
 }) {
   if (!featureData.properties) return null;
-  const { address, id, name, notes} = featureData.properties;
+  console.log(featureData.properties);
+  
+  const { address, id, name, notes, tags} = featureData.properties;
 	return (
 		<Card raised>
 			<CardContent>
 				<Typography component="h2" variant="h5">
-					Location Name
+					{name ? name : "Location Name"}
 				</Typography>
         {/* add button to flyTo feature */}
         {/* add button to edit/change colour */}
-				<Typography paragraph>Tags</Typography>
+				<Typography gutterBottom>
+          {tags ? tags : "Tags"}
+        </Typography>
         {/* Add collapse to show/hide notes and other details */}
-				<Typography paragraph variant="body2">
-					Notes
+				<Typography variant="body2">
+					{notes ? notes : "Notes"}
 				</Typography>
-				<Typography fontSize={12}>ID: {featureData.properties.id}</Typography>
+				{/* <Typography fontSize={12}>ID: {id}</Typography> */}
         {/* Replace ID with address (when available) */}
 			</CardContent>
 		</Card>

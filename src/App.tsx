@@ -1,16 +1,24 @@
 // mapboxgl and react hooks
 import mapboxgl from "mapbox-gl";
-import { useEffect, useRef, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { v4 as uuid } from "uuid";
 // import material ui components
 import Box from "@mui/material/Box";
 import Grid from "@mui/material/Grid";
+import Button from "@mui/material/Button";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogContentText from "@mui/material/DialogContentText";
+import DialogTitle from "@mui/material/DialogTitle";
+import Stack from "@mui/material/Stack";
+import TextField from "@mui/material/TextField";
 // import styles
 import "./App.css";
 // import components
 import Sidebar from "./components/Sidebar";
 // import other local modules
-import { localStorageId, mapboxLayerId, mapboxSourceId } from "./variables";
+import { localStorageId, mapboxLayerId, mapboxSourceId, emptyFeatureCollection, newPointFeature, pointProperties } from "./variables";
 import Toolbar from "./components/Toolbar";
 
 // add url restrictions before releasing production
@@ -18,10 +26,6 @@ import Toolbar from "./components/Toolbar";
 mapboxgl.accessToken = process.env.REACT_APP_MAPBOX_API_KEY as string;
 
 export default function App() {
-	const emptyFeatureCollection: GeoJSON.FeatureCollection = {
-		type: "FeatureCollection",
-		features: [],
-	};
 	// setup map object and container
 	const map: any = useRef(null);
 	const mapContainer: any = useRef(null);
@@ -33,8 +37,8 @@ export default function App() {
 		emptyFeatureCollection
 	);
 
-  // possible alternative to useEffect with geojsonData dependency (i.e. call instead of setGeojsonData)
-  function updateGeojsonData(newData:GeoJSON.FeatureCollection) {
+	// possible alternative to useEffect with geojsonData dependency (i.e. call instead of setGeojsonData)
+	function updateGeojsonData(newData: GeoJSON.FeatureCollection) {
 		// convert current data to a string and update localStorage
 		try {
 			const s = JSON.stringify(newData);
@@ -43,12 +47,12 @@ export default function App() {
 		} catch (error: any) {
 			console.error("Error updating localStorage:", error.message);
 		}
-    setGeojsonData(newData);
+		setGeojsonData(newData);
 		// update mapbox data
 		mapboxUpdateData();
 	}
 
-  // extrapolate map and functions to a separate class module?
+	// extrapolate map and functions to a separate class module?
 	function mapboxInit() {
 		if (map.current) return;
 		// initialize new map
@@ -96,19 +100,21 @@ export default function App() {
 		s.setData(geojsonData);
 	}
 
-  function handleSourcedata(e:mapboxgl.EventData) {
-    if (e.sourceId === mapboxSourceId && e.isSourceLoaded) {
+	function handleSourcedata(e: mapboxgl.EventData) {
+		if (e.sourceId === mapboxSourceId && e.isSourceLoaded) {
 			map.current.off("sourcedata", handleSourcedata);
 			mapboxSetData();
 		}
-  }
+	}
 
 	function mapboxUpdateData() {
-    if (
+    // mapbox update triggered
+		if (
 			map.current.getSource(mapboxSourceId) &&
 			map.current.isSourceLoaded(mapboxSourceId)
-		) mapboxSetData();
-    // Fired when one of the map's sources loads or changes
+		)
+			mapboxSetData();
+		// Fired when one of the map's sources loads or changes
 		else map.current.on("sourcedata", handleSourcedata);
 	}
 
@@ -150,8 +156,8 @@ export default function App() {
 
 	// update localStorage and Mapbox when data in state changes
 	useEffect(() => {
-		if (!geojsonData.features.length) return;
-		// convert current data to a string and update localStorage
+    if (!geojsonData.features.length) return;
+    // convert current data to a string and update localStorage
 		try {
 			const s = JSON.stringify(geojsonData);
 			if (s) localStorage.setItem(localStorageId, s);
@@ -165,8 +171,68 @@ export default function App() {
 
 	/* USER FUNCTIONS */
 
-  // add a point feature to the map (and data)
-	function addPoint() {
+	// setup dialog handlers
+	const [dialogOpen, setDialogOpen] = useState(false);
+  const openDialog = () => setDialogOpen(true);
+	function closeDialog() {
+    setDialogOpen(false);
+    setNewCoordinates([0,0]);
+		setNewFeatureName("");
+		setNewFeatureTags("");
+		setNewFeatureNotes("");
+  };
+
+	const [newCoordinates, setNewCoordinates] = useState([0,0]);
+  const [newFeatureName, setNewFeatureName] = useState("");
+  const [newFeatureTags, setNewFeatureTags] = useState("");
+  const [newFeatureNotes, setNewFeatureNotes] = useState("");
+
+  function addPointFeature(e: FormEvent<HTMLFormElement>) {
+    // prevent defaul form submit actions
+		e.preventDefault();
+		// build new feature object
+		const newPointFeature: GeoJSON.Feature = {
+			type: "Feature",
+			geometry: {
+				type: "Point",
+				coordinates: newCoordinates,
+			},
+			properties: {
+				address: "",
+				color: "",
+				created: Date.now(),
+				id: uuid(),
+				name: newFeatureName,
+				notes: newFeatureNotes,
+				tags: newFeatureTags,
+			},
+		};
+		// rebuild data with new feature
+		const newData = { ...geojsonData };
+		newData.features.push(newPointFeature);
+		// update data in state
+		setGeojsonData(newData);
+    console.log("added new feature:", newPointFeature);
+    // close the dialog modal
+		closeDialog();
+	}
+
+	function addPointListener() {
+		// set cursor to a pointer
+		map.current.getCanvas().style.cursor = "pointer";
+		// listen for the users click, then:
+		map.current.once("click", (e: mapboxgl.EventData) => {
+      // set coordinates in state
+      setNewCoordinates([e.lngLat.lng, e.lngLat.lat]);
+			// return cursor to default
+			map.current.getCanvas().style.cursor = "";
+			// open properties dialog to get properties
+      openDialog();
+		});
+	}
+
+	// add a point feature to the map (and data)
+	function addPointTool() {
 		// set cursor to a pointer
 		map.current.getCanvas().style.cursor = "pointer";
 		// listen for the users click
@@ -198,14 +264,14 @@ export default function App() {
 		});
 	}
 
-  // erase all data
+	// erase all data
 	function clearAllData() {
 		if (!window.confirm("Erase all data?")) return;
 		// update mapbox data with an empty feature collection
 		const s = map.current.getSource(mapboxSourceId);
 		if (!s) return;
 		s.setData(emptyFeatureCollection);
-    // replace localStorage item with an empty feature collection
+		// replace localStorage item with an empty feature collection
 		localStorage.setItem(
 			localStorageId,
 			JSON.stringify(emptyFeatureCollection)
@@ -243,8 +309,85 @@ export default function App() {
 				</Box>
 
 				{/* Toolbar */}
-			  <Toolbar addPoint={addPoint} clearAllData={clearAllData} />
+				{/* <Toolbar addPoint={addPointTool} clearAllData={clearAllData} /> */}
+				<Stack
+					alignItems="center"
+					direction="row"
+					marginBottom="20px"
+					spacing={2}
+					sx={{
+						bottom: 0,
+						left: "50%",
+						position: "absolute",
+						translate: "-50%",
+					}}
+				>
+					<Button onClick={addPointListener} variant="contained">
+						Add Point
+					</Button>
+					{/* <FormDialog addFeature={addPoint} title="Add Point"/> */}
+					<Button variant="contained">Add Polygon</Button>
+					<Button onClick={clearAllData} variant="contained">
+						Clear Data
+					</Button>
+				</Stack>
 
+				{/* modal form for feature properties */}
+				<Dialog
+          onClose={closeDialog}
+          open={dialogOpen}
+          PaperProps={{
+            component:"form",
+            onSubmit: addPointFeature
+          }}
+        >
+					<DialogTitle>New Feature Properties</DialogTitle>
+
+					<DialogContent>
+						<DialogContentText>
+							Enter the details of your new feature:
+						</DialogContentText>
+
+						<TextField
+							autoFocus
+							required
+							margin="dense"
+							id="name"
+							name="name"
+							label="Name"
+							fullWidth
+							value={newFeatureName}
+							onChange={(e) => setNewFeatureName(e.target.value)}
+						/>
+						<TextField
+							margin="dense"
+							id="tags"
+							name="tags"
+							label="Tags"
+							fullWidth
+							value={newFeatureTags}
+							onChange={(e) => setNewFeatureTags(e.target.value)}
+						/>
+						<TextField
+							multiline
+							margin="dense"
+							id="notes"
+							name="notes"
+							label="Notes"
+							fullWidth
+							minRows={3}
+							value={newFeatureNotes}
+							onChange={(e) => setNewFeatureNotes(e.target.value)}
+						/>
+					</DialogContent>
+
+					<DialogActions>
+						<Button type="submit" variant="outlined">Add Feature</Button>
+						<Button onClick={closeDialog} variant="outlined">
+							Cancel
+						</Button>
+					</DialogActions>
+				</Dialog>
 			</Grid>
 
 			{/* Sidebar */}

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { FormEvent, useState } from "react";
 // import material ui components
 import Button from "@mui/material/Button";
 import Dialog from "@mui/material/Dialog";
@@ -22,7 +22,40 @@ export default function Toolbar({
 	const openDialog = () => setDialogOpen(true);
 	const closeDialog = () => setDialogOpen(false);
 
-  
+  function onSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+		const formJson = Object.fromEntries((formData as any).entries());
+		console.log(formJson);
+    closeDialog();
+    return(formJson);
+  }
+
+  /*
+  add point with dialog
+
+  on button click:
+    add listener for map click
+    change cursor to precise pointer
+    - ? remove listener if another tool is clicked
+
+  on map click:
+    create new feature object (in state?)
+    add geojson coordinates to new feature object
+    change cursor back to default
+    open dialog to enter priorities
+
+  in dialog form
+    connect inputs to new feature object
+    
+  on dailog submit:
+    add new feature to main geojsonData
+    - ? on cancel, discard data
+  */
+
+  function addPointTool() {
+
+  }
 
 	return (
 		<>
