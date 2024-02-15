@@ -18,8 +18,7 @@ import "./App.css";
 // import components
 import Sidebar from "./components/Sidebar";
 // import other local modules
-import { localStorageId, mapboxLayerId, mapboxSourceId, emptyFeatureCollection, newPointFeature, pointProperties } from "./variables";
-import Toolbar from "./components/Toolbar";
+import { localStorageId, mapboxLayerId, mapboxSourceId, emptyFeatureCollection } from "./variables";
 
 // add url restrictions before releasing production
 // https://docs.mapbox.com/accounts/guides/tokens/#url-restrictions
@@ -108,7 +107,7 @@ export default function App() {
 	}
 
 	function mapboxUpdateData() {
-    // mapbox update triggered
+		// mapbox update triggered
 		if (
 			map.current.getSource(mapboxSourceId) &&
 			map.current.isSourceLoaded(mapboxSourceId)
@@ -128,6 +127,8 @@ export default function App() {
 		if (!map.current.getSource(mapboxSourceId)) mapboxAddSource();
 		// if layer(s) not loaded, load layer(s)
 		if (!map.current.getLayer(mapboxLayerId)) mapboxAddLayer();
+    console.log(map.current.getStyle().layers);
+    
 	}
 
 	// store geojson data in state on page load
@@ -156,8 +157,8 @@ export default function App() {
 
 	// update localStorage and Mapbox when data in state changes
 	useEffect(() => {
-    if (!geojsonData.features.length) return;
-    // convert current data to a string and update localStorage
+		if (!geojsonData.features.length) return;
+		// convert current data to a string and update localStorage
 		try {
 			const s = JSON.stringify(geojsonData);
 			if (s) localStorage.setItem(localStorageId, s);
@@ -173,22 +174,23 @@ export default function App() {
 
 	// setup dialog handlers
 	const [dialogOpen, setDialogOpen] = useState(false);
-  const openDialog = () => setDialogOpen(true);
+	const openDialog = () => setDialogOpen(true);
 	function closeDialog() {
-    setDialogOpen(false);
-    setNewCoordinates([0,0]);
+		setDialogOpen(false);
+		setNewCoordinates([0, 0]);
 		setNewFeatureName("");
 		setNewFeatureTags("");
 		setNewFeatureNotes("");
-  };
+	}
 
-	const [newCoordinates, setNewCoordinates] = useState([0,0]);
-  const [newFeatureName, setNewFeatureName] = useState("");
-  const [newFeatureTags, setNewFeatureTags] = useState("");
-  const [newFeatureNotes, setNewFeatureNotes] = useState("");
+	const [newCoordinates, setNewCoordinates] = useState([0, 0]);
+	const [newFeatureName, setNewFeatureName] = useState("");
+	const [newFeatureTags, setNewFeatureTags] = useState("");
+	const [newFeatureNotes, setNewFeatureNotes] = useState("");
 
-  function addPointFeature(e: FormEvent<HTMLFormElement>) {
-    // prevent defaul form submit actions
+	// add a point feature to the map (and data)
+	function addPointFeature(e: FormEvent<HTMLFormElement>) {
+		// prevent defaul form submit actions
 		e.preventDefault();
 		// build new feature object
 		const newPointFeature: GeoJSON.Feature = {
@@ -212,8 +214,7 @@ export default function App() {
 		newData.features.push(newPointFeature);
 		// update data in state
 		setGeojsonData(newData);
-    console.log("added new feature:", newPointFeature);
-    // close the dialog modal
+		// close the dialog modal
 		closeDialog();
 	}
 
@@ -222,45 +223,18 @@ export default function App() {
 		map.current.getCanvas().style.cursor = "pointer";
 		// listen for the users click, then:
 		map.current.once("click", (e: mapboxgl.EventData) => {
-      // set coordinates in state
-      setNewCoordinates([e.lngLat.lng, e.lngLat.lat]);
+      // console.log(e.lngLat);
+      const f = map.current.queryRenderedFeatures(
+				[e.lngLat.lng, e.lngLat.lat], // probably need a borBox for wider capture
+				{ layers: ["poi-label"] } // expand to all label layers?
+			);
+      console.log(f);
+			// set coordinates in state
+			setNewCoordinates([e.lngLat.lng, e.lngLat.lat]);
 			// return cursor to default
 			map.current.getCanvas().style.cursor = "";
 			// open properties dialog to get properties
-      openDialog();
-		});
-	}
-
-	// add a point feature to the map (and data)
-	function addPointTool() {
-		// set cursor to a pointer
-		map.current.getCanvas().style.cursor = "pointer";
-		// listen for the users click
-		map.current.once("click", (e: mapboxgl.EventData) => {
-			// create new feature
-			const newPoint: GeoJSON.Feature = {
-				type: "Feature",
-				geometry: {
-					type: "Point",
-					coordinates: [e.lngLat.lng, e.lngLat.lat],
-				},
-				properties: {
-					address: "",
-					color: "",
-					created: Date.now(),
-					id: uuid(),
-					name: "",
-					notes: [],
-					tags: [],
-				},
-			};
-			// rebuild data with new feature
-			const newData = { ...geojsonData };
-			newData.features.push(newPoint);
-			// update data in state
-			setGeojsonData(newData);
-			// return cursor to default
-			map.current.getCanvas().style.cursor = "";
+			openDialog();
 		});
 	}
 
@@ -309,7 +283,6 @@ export default function App() {
 				</Box>
 
 				{/* Toolbar */}
-				{/* <Toolbar addPoint={addPointTool} clearAllData={clearAllData} /> */}
 				<Stack
 					alignItems="center"
 					direction="row"
@@ -325,8 +298,7 @@ export default function App() {
 					<Button onClick={addPointListener} variant="contained">
 						Add Point
 					</Button>
-					{/* <FormDialog addFeature={addPoint} title="Add Point"/> */}
-					<Button variant="contained">Add Polygon</Button>
+					{/* <Button variant="contained">Add Polygon</Button> */}
 					<Button onClick={clearAllData} variant="contained">
 						Clear Data
 					</Button>
@@ -334,13 +306,13 @@ export default function App() {
 
 				{/* modal form for feature properties */}
 				<Dialog
-          onClose={closeDialog}
-          open={dialogOpen}
-          PaperProps={{
-            component:"form",
-            onSubmit: addPointFeature
-          }}
-        >
+					onClose={closeDialog}
+					open={dialogOpen}
+					PaperProps={{
+						component: "form",
+						onSubmit: addPointFeature,
+					}}
+				>
 					<DialogTitle>New Feature Properties</DialogTitle>
 
 					<DialogContent>
@@ -382,7 +354,9 @@ export default function App() {
 					</DialogContent>
 
 					<DialogActions>
-						<Button type="submit" variant="outlined">Add Feature</Button>
+						<Button type="submit" variant="outlined">
+							Add Feature
+						</Button>
 						<Button onClick={closeDialog} variant="outlined">
 							Cancel
 						</Button>

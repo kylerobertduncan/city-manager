@@ -8,9 +8,7 @@ export default function FeatureCard({
 	featureData: GeoJSON.Feature;
 }) {
   if (!featureData.properties) return null;
-  console.log(featureData.properties);
-  
-  const { address, id, name, notes, tags} = featureData.properties;
+  const { address, id, name, notes, tags } = featureData.properties;
 	return (
 		<Card raised>
 			<CardContent>
