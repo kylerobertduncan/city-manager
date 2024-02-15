@@ -52,7 +52,7 @@ import Toolbar from "@mui/material/Toolbar";
 
 export default function SidebarHeader() {
 	return (
-		<Box sx={{ flexGrow: 1 }}>
+		<Box>
 			<AppBar position="static">
 				<Toolbar>
 					{/* <IconButton
@@ -68,7 +68,7 @@ export default function SidebarHeader() {
 						variant="h5"
 						noWrap
 						component="h1"
-						sx={{ flexGrow: 1, display: { xs: "none", sm: "block" } }}
+						// sx={{ flexGrow: 1, display: { xs: "none", sm: "block" } }}
 					>
 						The Second Tradition
 					</Typography>

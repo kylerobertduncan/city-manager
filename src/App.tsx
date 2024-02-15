@@ -13,12 +13,22 @@ import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
+import Tooltip from "@mui/material/Tooltip";
+// import material ui icons
+import AddLocationAltIcon from "@mui/icons-material/AddLocationAlt";
+import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 // import styles
 import "./App.css";
 // import components
 import Sidebar from "./components/Sidebar";
+import MobileSidebar from "./components/MobileSidebar";
 // import other local modules
-import { localStorageId, mapboxLayerId, mapboxSourceId, emptyFeatureCollection } from "./variables";
+import {
+	localStorageId,
+	mapboxLayerId,
+	mapboxSourceId,
+	emptyFeatureCollection,
+} from "./variables";
 
 // add url restrictions before releasing production
 // https://docs.mapbox.com/accounts/guides/tokens/#url-restrictions
@@ -88,6 +98,7 @@ export default function App() {
 				type: "circle",
 				paint: {
 					"circle-color": "red",
+          "circle-opacity": 0.75,
 				},
 			},
 			"road-label"
@@ -127,8 +138,7 @@ export default function App() {
 		if (!map.current.getSource(mapboxSourceId)) mapboxAddSource();
 		// if layer(s) not loaded, load layer(s)
 		if (!map.current.getLayer(mapboxLayerId)) mapboxAddLayer();
-    console.log(map.current.getStyle().layers);
-    
+		// console.log(map.current.getStyle().layers);
 	}
 
 	// store geojson data in state on page load
@@ -223,12 +233,12 @@ export default function App() {
 		map.current.getCanvas().style.cursor = "pointer";
 		// listen for the users click, then:
 		map.current.once("click", (e: mapboxgl.EventData) => {
-      // console.log(e.lngLat);
-      const f = map.current.queryRenderedFeatures(
+			// console.log(e.lngLat);
+			const f = map.current.queryRenderedFeatures(
 				[e.lngLat.lng, e.lngLat.lat], // probably need a borBox for wider capture
 				{ layers: ["poi-label"] } // expand to all label layers?
 			);
-      console.log(f);
+			console.log(f);
 			// set coordinates in state
 			setNewCoordinates([e.lngLat.lng, e.lngLat.lat]);
 			// return cursor to default
@@ -269,14 +279,22 @@ export default function App() {
 				<Box
 					className="map-container"
 					component="div"
-					height="100vh"
+					height="100dvh"
 					ref={mapContainer}
 				/>
 
 				{/* lngLatZoom readout for dev only */}
 				<Box
 					className="floatingElement"
-					sx={{ position: "absolute", top: 0, left: 0 }}
+					sx={{
+						display: {
+							xs: "none",
+							md: "block",
+						},
+						position: "absolute",
+						top: 0,
+						left: 0,
+					}}
 				>
 					Center: Lng: {mapCenter.lng.toFixed(4)} | Lat:{" "}
 					{mapCenter.lat.toFixed(4)} | Zoom: {zoom.toFixed(2)}
@@ -285,23 +303,50 @@ export default function App() {
 				{/* Toolbar */}
 				<Stack
 					alignItems="center"
+					justifyContent="center"
 					direction="row"
-					marginBottom="20px"
-					spacing={2}
+					marginY="20px"
+					spacing={{ xs: 1, md: 2 }}
+					// minWidth="250px"
 					sx={{
-						bottom: 0,
+						bottom: {
+							xs: "auto",
+							md: 0,
+						},
 						left: "50%",
+						top: {
+							xs: 0,
+							md: "auto",
+						},
 						position: "absolute",
 						translate: "-50%",
 					}}
 				>
-					<Button onClick={addPointListener} variant="contained">
-						Add Point
-					</Button>
+					<Tooltip title="Add Point Feature">
+						<Button
+							onClick={addPointListener}
+							variant="contained"
+							sx={{
+								minWidth: "auto",
+								p: 1,
+							}}
+						>
+							<AddLocationAltIcon />
+						</Button>
+					</Tooltip>
 					{/* <Button variant="contained">Add Polygon</Button> */}
-					<Button onClick={clearAllData} variant="contained">
-						Clear Data
-					</Button>
+					<Tooltip title="Delete all features">
+						<Button
+							onClick={clearAllData}
+							variant="contained"
+							sx={{
+								minWidth: "auto",
+								p: 1,
+							}}
+						>
+							<DeleteForeverIcon />
+						</Button>
+					</Tooltip>
 				</Stack>
 
 				{/* modal form for feature properties */}
@@ -365,7 +410,9 @@ export default function App() {
 			</Grid>
 
 			{/* Sidebar */}
+      {/* add conditional load based on useMediaQuery */}
 			<Sidebar geojsonData={geojsonData} />
+			<MobileSidebar geojsonData={geojsonData} />
 		</Grid>
 	);
 }
