@@ -59,6 +59,8 @@ export default function MobileSidebar({
 								bgcolor: "grey.900",
 								display: "flex",
 								justifyContent: "space-between",
+                position: "sticky",
+                top: 0
 							}}
 						>
 							<Typography component="h1" variant="h5">

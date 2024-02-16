@@ -15,8 +15,11 @@ import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 // import material ui icons
-import AddLocationAltIcon from "@mui/icons-material/AddLocationAlt";
+import ExploreIcon from "@mui/icons-material/Explore";
+import PlaceIcon from "@mui/icons-material/Place";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
+import PolylineIcon from "@mui/icons-material/Polyline";
+import RouteIcon from "@mui/icons-material/Route";
 // import styles
 import "./App.css";
 // import components
@@ -39,8 +42,8 @@ export default function App() {
 	const map: any = useRef(null);
 	const mapContainer: any = useRef(null);
 	// setup state for changable map properties
-	const [mapCenter, setMapCenter] = useState({ lng: -79.35, lat: 43.68 });
-	const [zoom, setZoom] = useState(11);
+	const [mapCenter, setMapCenter] = useState({ lng: -79.37, lat: 43.65 });
+	const [zoom, setZoom] = useState(12);
 	// setup state for local storage geojson object
 	const [geojsonData, setGeojsonData] = useState<GeoJSON.FeatureCollection>(
 		emptyFeatureCollection
@@ -322,7 +325,18 @@ export default function App() {
 						translate: "-50%",
 					}}
 				>
-					<Tooltip title="Add Point Feature">
+					<Tooltip title="Select a feature">
+						<Button
+							variant="contained"
+							sx={{
+								minWidth: "auto",
+								p: 1,
+							}}
+						>
+							<ExploreIcon />
+						</Button>
+					</Tooltip>
+					<Tooltip title="Add a point feature">
 						<Button
 							onClick={addPointListener}
 							variant="contained"
@@ -331,10 +345,31 @@ export default function App() {
 								p: 1,
 							}}
 						>
-							<AddLocationAltIcon />
+							<PlaceIcon />
 						</Button>
 					</Tooltip>
-					{/* <Button variant="contained">Add Polygon</Button> */}
+					<Tooltip title="Add a polygon feature">
+						<Button
+							variant="contained"
+							sx={{
+								minWidth: "auto",
+								p: 1,
+							}}
+						>
+							<PolylineIcon />
+						</Button>
+					</Tooltip>
+					<Tooltip title="Calculate a route">
+						<Button
+							variant="contained"
+							sx={{
+								minWidth: "auto",
+								p: 1,
+							}}
+						>
+							<RouteIcon />
+						</Button>
+					</Tooltip>
 					<Tooltip title="Delete all features">
 						<Button
 							onClick={clearAllData}
@@ -410,7 +445,7 @@ export default function App() {
 			</Grid>
 
 			{/* Sidebar */}
-      {/* add conditional load based on useMediaQuery */}
+			{/* add conditional load based on useMediaQuery */}
 			<Sidebar geojsonData={geojsonData} />
 			<MobileSidebar geojsonData={geojsonData} />
 		</Grid>

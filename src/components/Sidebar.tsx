@@ -29,13 +29,11 @@ export default function Sidebar({
 			}}
 		>
 			{/* <SidebarHeader /> */}
-      {/* <Box> */}
-        <Toolbar sx={{ bgcolor:"grey.900" }}>
-          <Typography component="h1" variant="h5">
-            The Second Tradition
-          </Typography>
-        </Toolbar>
-      {/* </Box> */}
+      <Toolbar sx={{ bgcolor:"grey.900", position:"sticky", top:0 }}>
+        <Typography component="h1" variant="h5">
+          The Second Tradition
+        </Typography>
+      </Toolbar>
 			<Container sx={{ marginTop: "24px" }}>
 				<Grid component="ul" container spacing={3} paddingLeft="0" sx={{}}>
 					{geojsonData.features.map((f: GeoJSON.Feature, i) => {
