@@ -56,22 +56,22 @@ export default function App() {
 	);
 
 	// possible alternative to useEffect with geojsonData dependency (i.e. call instead of setGeojsonData)
-	function updateGeojsonData(newData: GeoJSON.FeatureCollection) {
-    if (!geojsonData.features.length) {
-      if (window.confirm("You're about to overwrite any save features with an empty geojson object. Do you want to Continue?")) return;
-    }
-    // convert current data to a string and update localStorage
-    try {
-      const s = JSON.stringify(newData);
-      if (s) localStorage.setItem(localStorageId, s);
-      // catch and report any errors
-    } catch (error: any) {
-      console.error("Error updating localStorage:", error.message);
-    }
-		setGeojsonData(newData);
-		// update mapbox data
-		mapboxUpdateData();
-	}
+	// function updateGeojsonData(newData: GeoJSON.FeatureCollection) {
+  //   if (!geojsonData.features.length) {
+  //     if (window.confirm("You're about to overwrite any save features with an empty geojson object. Do you want to Continue?")) return;
+  //   }
+  //   // convert current data to a string and update localStorage
+  //   try {
+  //     const s = JSON.stringify(newData);
+  //     if (s) localStorage.setItem(localStorageId, s);
+  //     // catch and report any errors
+  //   } catch (error: any) {
+  //     console.error("Error updating localStorage:", error.message);
+  //   }
+	// 	setGeojsonData(newData);
+	// 	// update mapbox data
+	// 	mapboxUpdateData();
+	// }
 
 	// extrapolate map and functions to a separate class module?
 	function mapboxInit() {
@@ -83,7 +83,7 @@ export default function App() {
 			center: mapCenter,
 			zoom: zoom,
 		});
-		// setup map listeners for user movement
+    // setup map listeners for user movement
 		map.current.on("move", () => {
 			const c = map.current.getCenter();
 			setMapCenter({ lng: c.lng, lat: c.lat });
@@ -111,11 +111,42 @@ export default function App() {
 				paint: {
 					"circle-color": "red",
 					"circle-opacity": 0.75,
+					"circle-radius": 10,
 				},
 			},
 			"road-label"
 		);
+    map.current.addLayer(
+			{
+				id: `${mapboxLayerId}-trigger`,
+				source: mapboxSourceId,
+				type: "circle",
+				paint: {
+					"circle-color": "transparent",
+					// "circle-opacity": 0,
+          "circle-radius": 20,
+				},
+			},
+			"road-label"
+		);
+    map.current.on("mouseenter", `${mapboxLayerId}-trigger`, () => map.current.getCanvas().style.cursor = "pointer");
+    map.current.on("mouseleave", `${mapboxLayerId}-trigger`, () => map.current.getCanvas().style.cursor = "");
+    map.current.on("click", `${mapboxLayerId}-trigger`, showLayerPopup);
 	}
+
+  function showLayerPopup(e:mapboxgl.EventData) {
+    // console.log(e.features, e.target);
+    map.current.easeTo({
+      center: e.lngLat,
+      duration: 1000,
+    });
+    const popup = new mapboxgl.Popup({ anchor:"left" });
+    popup
+			.setLngLat(e.lngLat)
+			.setHTML(`<h2 style="color:black;">${e.features[0].properties.name}</h2>`)
+			.setMaxWidth("300px")
+			.addTo(map.current);
+  }
 
 	function mapboxSetData() {
 		const s = map.current.getSource(mapboxSourceId);
@@ -254,7 +285,7 @@ export default function App() {
 			console.log(f);
 			// center map on click
 			map.current.easeTo({
-				center: [e.lngLat.lng, e.lngLat.lat],
+				center: e.lngLat,
 				duration: 1000,
 			});
 			// set coordinates in state
