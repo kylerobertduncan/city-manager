@@ -14,6 +14,8 @@ import DialogTitle from "@mui/material/DialogTitle";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
+import useMediaQuery from "@mui/material/useMediaQuery";
+import { useTheme } from "@mui/material/styles";
 // import material ui icons
 import ExploreIcon from "@mui/icons-material/Explore";
 import PlaceIcon from "@mui/icons-material/Place";
@@ -38,6 +40,10 @@ import {
 mapboxgl.accessToken = process.env.REACT_APP_MAPBOX_API_KEY as string;
 
 export default function App() {
+  // establish screen size
+  const theme = useTheme();
+	// should this be in state?
+	const desktop = useMediaQuery(theme.breakpoints.up("md"));
 	// setup map object and container
 	const map: any = useRef(null);
 	const mapContainer: any = useRef(null);
@@ -51,14 +57,17 @@ export default function App() {
 
 	// possible alternative to useEffect with geojsonData dependency (i.e. call instead of setGeojsonData)
 	function updateGeojsonData(newData: GeoJSON.FeatureCollection) {
-		// convert current data to a string and update localStorage
-		try {
-			const s = JSON.stringify(newData);
-			if (s) localStorage.setItem(localStorageId, s);
-			// catch and report any errors
-		} catch (error: any) {
-			console.error("Error updating localStorage:", error.message);
-		}
+    if (!geojsonData.features.length) {
+      if (window.confirm("You're about to overwrite any save features with an empty geojson object. Do you want to Continue?")) return;
+    }
+    // convert current data to a string and update localStorage
+    try {
+      const s = JSON.stringify(newData);
+      if (s) localStorage.setItem(localStorageId, s);
+      // catch and report any errors
+    } catch (error: any) {
+      console.error("Error updating localStorage:", error.message);
+    }
 		setGeojsonData(newData);
 		// update mapbox data
 		mapboxUpdateData();
@@ -101,7 +110,7 @@ export default function App() {
 				type: "circle",
 				paint: {
 					"circle-color": "red",
-          "circle-opacity": 0.75,
+					"circle-opacity": 0.75,
 				},
 			},
 			"road-label"
@@ -170,6 +179,7 @@ export default function App() {
 
 	// update localStorage and Mapbox when data in state changes
 	useEffect(() => {
+    // prevents overwriting localStorage with empty collection on load
 		if (!geojsonData.features.length) return;
 		// convert current data to a string and update localStorage
 		try {
@@ -242,6 +252,11 @@ export default function App() {
 				{ layers: ["poi-label"] } // expand to all label layers?
 			);
 			console.log(f);
+			// center map on click
+			map.current.easeTo({
+				center: [e.lngLat.lng, e.lngLat.lat],
+				duration: 1000,
+			});
 			// set coordinates in state
 			setNewCoordinates([e.lngLat.lng, e.lngLat.lat]);
 			// return cursor to default
@@ -433,7 +448,7 @@ export default function App() {
 						/>
 					</DialogContent>
 
-					<DialogActions>
+					<DialogActions sx={{ justifyContent: "center", paddingBottom: 2 }}>
 						<Button type="submit" variant="outlined">
 							Add Feature
 						</Button>
@@ -445,9 +460,11 @@ export default function App() {
 			</Grid>
 
 			{/* Sidebar */}
-			{/* add conditional load based on useMediaQuery */}
-			<Sidebar geojsonData={geojsonData} />
-			<MobileSidebar geojsonData={geojsonData} />
+			{desktop ? ( // should this be in state?
+				<Sidebar geojsonData={geojsonData} />
+			) : (
+				<MobileSidebar geojsonData={geojsonData} />
+			)}
 		</Grid>
 	);
 }
