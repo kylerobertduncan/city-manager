@@ -40,8 +40,8 @@ import {
 mapboxgl.accessToken = process.env.REACT_APP_MAPBOX_API_KEY as string;
 
 export default function App() {
-  // establish screen size
-  const theme = useTheme();
+	// establish screen size
+	const theme = useTheme();
 	// should this be in state?
 	const desktop = useMediaQuery(theme.breakpoints.up("md"));
 	// setup map object and container
@@ -57,17 +57,17 @@ export default function App() {
 
 	// possible alternative to useEffect with geojsonData dependency (i.e. call instead of setGeojsonData)
 	// function updateGeojsonData(newData: GeoJSON.FeatureCollection) {
-  //   if (!geojsonData.features.length) {
-  //     if (window.confirm("You're about to overwrite any save features with an empty geojson object. Do you want to Continue?")) return;
-  //   }
-  //   // convert current data to a string and update localStorage
-  //   try {
-  //     const s = JSON.stringify(newData);
-  //     if (s) localStorage.setItem(localStorageId, s);
-  //     // catch and report any errors
-  //   } catch (error: any) {
-  //     console.error("Error updating localStorage:", error.message);
-  //   }
+	//   if (!geojsonData.features.length) {
+	//     if (window.confirm("You're about to overwrite any save features with an empty geojson object. Do you want to Continue?")) return;
+	//   }
+	//   // convert current data to a string and update localStorage
+	//   try {
+	//     const s = JSON.stringify(newData);
+	//     if (s) localStorage.setItem(localStorageId, s);
+	//     // catch and report any errors
+	//   } catch (error: any) {
+	//     console.error("Error updating localStorage:", error.message);
+	//   }
 	// 	setGeojsonData(newData);
 	// 	// update mapbox data
 	// 	mapboxUpdateData();
@@ -83,7 +83,7 @@ export default function App() {
 			center: mapCenter,
 			zoom: zoom,
 		});
-    // setup map listeners for user movement
+		// setup map listeners for user movement
 		map.current.on("move", () => {
 			const c = map.current.getCenter();
 			setMapCenter({ lng: c.lng, lat: c.lat });
@@ -116,7 +116,7 @@ export default function App() {
 			},
 			"road-label"
 		);
-    map.current.addLayer(
+		map.current.addLayer(
 			{
 				id: `${mapboxLayerId}-trigger`,
 				source: mapboxSourceId,
@@ -124,29 +124,37 @@ export default function App() {
 				paint: {
 					"circle-color": "transparent",
 					// "circle-opacity": 0,
-          "circle-radius": 20,
+					"circle-radius": 20,
 				},
 			},
 			"road-label"
 		);
-    map.current.on("mouseenter", `${mapboxLayerId}-trigger`, () => map.current.getCanvas().style.cursor = "pointer");
-    map.current.on("mouseleave", `${mapboxLayerId}-trigger`, () => map.current.getCanvas().style.cursor = "");
-    map.current.on("click", `${mapboxLayerId}-trigger`, showLayerPopup);
+		map.current.on(
+			"mouseenter",
+			`${mapboxLayerId}-trigger`,
+			() => (map.current.getCanvas().style.cursor = "pointer")
+		);
+		map.current.on(
+			"mouseleave",
+			`${mapboxLayerId}-trigger`,
+			() => (map.current.getCanvas().style.cursor = "")
+		);
+		map.current.on("click", `${mapboxLayerId}-trigger`, showLayerPopup);
 	}
 
-  function showLayerPopup(e:mapboxgl.EventData) {
-    // console.log(e.features, e.target);
-    map.current.easeTo({
-      center: e.lngLat,
-      duration: 1000,
-    });
-    const popup = new mapboxgl.Popup({ anchor:"left" });
-    popup
+	function showLayerPopup(e: mapboxgl.EventData) {
+		// console.log(e.features, e.target);
+		map.current.easeTo({
+			center: e.lngLat,
+			duration: 1000,
+		});
+		const popup = new mapboxgl.Popup({ anchor: "left" });
+		popup
 			.setLngLat(e.lngLat)
 			.setHTML(`<h2 style="color:black;">${e.features[0].properties.name}</h2>`)
 			.setMaxWidth("300px")
 			.addTo(map.current);
-  }
+	}
 
 	function mapboxSetData() {
 		const s = map.current.getSource(mapboxSourceId);
@@ -210,7 +218,7 @@ export default function App() {
 
 	// update localStorage and Mapbox when data in state changes
 	useEffect(() => {
-    // prevents overwriting localStorage with empty collection on load
+		// prevents overwriting localStorage with empty collection on load
 		if (!geojsonData.features.length) return;
 		// convert current data to a string and update localStorage
 		try {
@@ -297,6 +305,177 @@ export default function App() {
 		});
 	}
 
+  const [newPolygon, setNewPolygon] = useState<
+		GeoJSON.LineString | GeoJSON.Polygon
+	>({ type: "LineString", coordinates: [] });
+
+	// add a point feature to the map (and data)
+	function addPolygonFeature() {}
+
+  const handleMouseMove = (
+		e: mapboxgl.EventData,
+		data: GeoJSON.LineString | GeoJSON.Polygon,
+		newPoint: number
+	) => {
+		// console.log("mouse is following click number:", newPoint);
+		data.coordinates[newPoint] = [e.lngLat.lng, e.lngLat.lat];
+		// update source data
+		map.current.getSource("newPolygon").setData(data);
+		// map.current.getSource("newPolygon").setData(liveData);
+	};
+
+  function escapeNewPolygon() {}
+
+  function handleFirstClick(
+		e: mapboxgl.EventData,
+		newPolygonData: GeoJSON.LineString | GeoJSON.Polygon
+	) {
+		// on first click:
+    console.log("first click!", newPolygon);
+    // add initial point to coordinate collection/source
+    newPolygonData.coordinates.push([e.lngLat.lng, e.lngLat.lat]);
+    console.log(newPolygonData.coordinates);
+    setNewPolygon(newPolygonData);
+    // add a temporary line layer between the first point and the cursor
+    if (!map.current.getLayer("newPolygon-line")) {
+      map.current.addLayer({
+        id: "newPolygon-line",
+        source: "newPolygon",
+        type: "line",
+        paint: {
+          "line-color": "red",
+        },
+      });
+    }
+    // (start listening to mousemove)
+    // followCursor(newPolygonData);
+    const length: number = newPolygonData.coordinates.length;
+    console.log("length:", length);
+    map.current.on("mousemove", (e: mapboxgl.EventData) =>
+      handleMouseMove(e, newPolygonData, length)
+    );
+	}
+
+  function handleSecondClick(
+		e: mapboxgl.EventData,
+		newPolygonData: GeoJSON.LineString | GeoJSON.Polygon
+	) {
+		// on the second click:
+		if (newPolygon.coordinates.length === 1) {
+			console.log("second click!", newPolygon);
+			map.current.off("mousemove", (e: mapboxgl.EventData) =>
+				handleMouseMove(e, newPolygonData, length)
+			);
+			// add the second point to the coordinate collection/source
+			newPolygonData.coordinates.push([e.lngLat.lng, e.lngLat.lat]);
+			console.log(newPolygonData.coordinates);
+			// newPolygonData.type = "Polygon";
+			setNewPolygon(newPolygonData);
+			// remove the temporary line layer
+			// if (!map.current.getLayer("newPolygon-line"))
+			// 	map.current.removeLayer("newPolygon-line");
+			// // add a temporary polygon layer with two fixed points and a third at the cursor
+			// if (!map.current.getLayer("newPolygon-polygon")) {
+			// 	map.current.addLayer({
+			// 		id: "newPolygon-polygon",
+			// 		source: "newPolygon",
+			// 		type: "fill",
+			// 		paint: {
+			// 			"fill-color": "red",
+			// 			"fill-opacity": 0.25,
+			// 		},
+			// 	});
+			// }
+			// (start listening to mousemove)
+			// followCursor(newPolygonData);
+			const length: number = newPolygonData.coordinates.length;
+			console.log("length:", length);
+			map.current.on("mousemove", (e: mapboxgl.EventData) =>
+				handleMouseMove(e, newPolygonData, length)
+			);
+		}
+	}
+
+  function handleFurtherClicks(
+		e: mapboxgl.EventData,
+		newPolygonData: GeoJSON.LineString | GeoJSON.Polygon
+	) {
+		// on third and subsquent clicks:
+    console.log(
+      "click number:",
+      newPolygon.coordinates.length + 1,
+      newPolygon
+    );
+    // remove previous listener
+    map.current.off("mousemove", (e: mapboxgl.EventData) =>
+      handleMouseMove(e, newPolygonData, length)
+    );
+    // add the point to the coordinate collection/source
+    newPolygonData.coordinates.push([e.lngLat.lng, e.lngLat.lat]);
+    console.log(newPolygonData.coordinates);
+    setNewPolygon(newPolygonData);
+    // update the temporary polygon layer (start listening to mousemove)
+    // followCursor(newPolygonData);
+    const length: number = newPolygonData.coordinates.length;
+    console.log("length:", length);
+    map.current.on("mousemove", (e: mapboxgl.EventData) =>
+      handleMouseMove(e, newPolygonData, length)
+    );
+	}
+
+	function polygonListener(e: mapboxgl.EventData) {
+    const updatedPolygon = { ...newPolygon };
+    updatedPolygon.coordinates.push([e.lngLat.lng, e.lngLat.lat]);
+    setNewPolygon(updatedPolygon);
+    console.log("newPolygon in state:", newPolygon);
+    console.log("newPolygon coordinates:", newPolygon.coordinates.length);
+    
+		// add a listener for:
+		// click "on" first point (trigger layer),
+		// map.current.once("click", (e: mapboxgl.EventData) => {
+		// 	console.log("click event", e);
+		// });
+		// // doubleclick
+		// map.current.once("dblclick", (e: mapboxgl.EventData) => {
+		// 	console.log("double click event", e);
+		// });
+		// // or esc keydown
+		// map.current.getCanvas().addEventListener("keydown", (e:Event) => {
+		//   e.preventDefault();
+		//   console.log("keydown event:", e);
+    //   if (e.which === 100) {}
+		// })
+		// handle end, depending on number of points
+		// turn off listener(s)
+		//
+		// create and add a mapbox source to temporarily render the line/polygon
+		// const newPolygonData: GeoJSON.LineString | GeoJSON.Polygon = {
+		// 	...newPolygon,
+		// };
+		// if (!map.current.getSource("newPolygon")) {
+		// 	map.current.addSource("newPolygon", {
+		// 		type: "geojson",
+		// 		data: {
+		// 			geometry: newPolygonData,
+		// 			type: "Feature",
+		// 		},
+		// 	});
+    // }
+		//
+    // if (!newPolygon.coordinates.length) handleFirstClick(e, newPolygonData);
+		// if (newPolygon.coordinates.length === 1)
+		// 	handleSecondClick(e, newPolygonData);
+		// if (newPolygon.coordinates.length > 1)
+		// 	handleFurtherClicks(e, newPolygonData);
+	}
+
+  function addPolygonListener() {
+		// set cursor to a pointer
+		map.current.getCanvas().style.cursor = "pointer";
+		// start listening for the users click
+		map.current.on("click", polygonListener);
+	}
+
 	// erase all data
 	function clearAllData() {
 		if (!window.confirm("Erase all data?")) return;
@@ -371,17 +550,18 @@ export default function App() {
 						translate: "-50%",
 					}}
 				>
-					<Tooltip title="Select a feature">
-						<Button
-							variant="contained"
-							sx={{
-								minWidth: "auto",
-								p: 1,
-							}}
-						>
-							<ExploreIcon />
-						</Button>
-					</Tooltip>
+					{/* <Tooltip title="Select a feature"> */}
+					<Button
+						disabled
+						variant="contained"
+						sx={{
+							minWidth: "auto",
+							p: 1,
+						}}
+					>
+						<ExploreIcon />
+					</Button>
+					{/* </Tooltip> */}
 					<Tooltip title="Add a point feature">
 						<Button
 							onClick={addPointListener}
@@ -396,6 +576,7 @@ export default function App() {
 					</Tooltip>
 					<Tooltip title="Add a polygon feature">
 						<Button
+							onClick={addPolygonListener}
 							variant="contained"
 							sx={{
 								minWidth: "auto",
@@ -405,17 +586,18 @@ export default function App() {
 							<PolylineIcon />
 						</Button>
 					</Tooltip>
-					<Tooltip title="Calculate a route">
-						<Button
-							variant="contained"
-							sx={{
-								minWidth: "auto",
-								p: 1,
-							}}
-						>
-							<RouteIcon />
-						</Button>
-					</Tooltip>
+					{/* <Tooltip title="Calculate a route"> */}
+					<Button
+						disabled
+						variant="contained"
+						sx={{
+							minWidth: "auto",
+							p: 1,
+						}}
+					>
+						<RouteIcon />
+					</Button>
+					{/* </Tooltip> */}
 					<Tooltip title="Delete all features">
 						<Button
 							onClick={clearAllData}
