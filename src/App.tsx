@@ -1,18 +1,12 @@
 // mapboxgl and react hooks
 import mapboxgl from "mapbox-gl";
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { v4 as uuid } from "uuid";
 // import material ui components
 import Box from "@mui/material/Box";
 import Grid from "@mui/material/Grid";
 import Button from "@mui/material/Button";
-import Dialog from "@mui/material/Dialog";
-import DialogActions from "@mui/material/DialogActions";
-import DialogContent from "@mui/material/DialogContent";
-import DialogContentText from "@mui/material/DialogContentText";
-import DialogTitle from "@mui/material/DialogTitle";
 import Stack from "@mui/material/Stack";
-import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { useTheme } from "@mui/material/styles";
@@ -25,14 +19,20 @@ import RouteIcon from "@mui/icons-material/Route";
 // import styles
 import "./App.css";
 // import components
-import Sidebar from "./components/Sidebar";
+import AddFeatureDialog from "./components/AddFeatureDialog";
 import MobileSidebar from "./components/MobileSidebar";
+import Sidebar from "./components/Sidebar";
 // import other local modules
 import {
 	localStorageId,
+	mapboxDraftSourceId,
 	mapboxLayerId,
+	mapboxPolygonLayerId,
 	mapboxSourceId,
 	emptyFeatureCollection,
+	mapboxDraftMultiPointLayerId,
+	mapboxDraftLineLayerId,
+	mapboxDraftFillLayerId,
 } from "./variables";
 
 // add url restrictions before releasing production
@@ -98,13 +98,39 @@ export default function App() {
 			type: "geojson",
 			data: geojsonData,
 		});
+		// add draft source
+		// map.current.addSource(mapboxDraftSourceId, {
+		// 	type: "geojson",
+		// 	data: {
+		// 		type: "Feature",
+		// 		geometry: {
+		// 			type: "Polygon",
+		// 			coordinates: [newPolygonCoordinates],
+		// 		},
+		// 	},
+		// });
 	}
 
 	function mapboxAddLayer() {
 		if (map.current.getLayer(mapboxLayerId)) return;
+		map.current.addLayer(
+			{
+				filter: ["==", ["geometry-type"], "Polygon"],
+				id: mapboxPolygonLayerId,
+				source: mapboxSourceId,
+				type: "fill",
+				paint: {
+					"fill-color": "red",
+					"fill-opacity": 0.5,
+				},
+			},
+      "land-structure-polygon",
+
+		);
 		// add layer
 		map.current.addLayer(
 			{
+				filter: ["==", ["geometry-type"], "Point"],
 				id: mapboxLayerId,
 				source: mapboxSourceId,
 				type: "circle",
@@ -118,6 +144,7 @@ export default function App() {
 		);
 		map.current.addLayer(
 			{
+				filter: ["==", ["geometry-type"], "Point"],
 				id: `${mapboxLayerId}-trigger`,
 				source: mapboxSourceId,
 				type: "circle",
@@ -140,11 +167,23 @@ export default function App() {
 			() => (map.current.getCanvas().style.cursor = "")
 		);
 		map.current.on("click", `${mapboxLayerId}-trigger`, showLayerPopup);
+		// map.current.addLayer({
+		// 	id: mapboxDraftFillLayerId,
+		// 	source: mapboxDraftSourceId,
+		// 	type: "fill",
+		// 	paint: {
+		// 		"fill-color": "yellow",
+		// 		"fill-opacity": 0.5,
+		// 		"fill-outline-color": "blue",
+		// 	},
+		// });
 	}
 
 	function showLayerPopup(e: mapboxgl.EventData) {
 		// console.log(e.features, e.target);
 		map.current.easeTo({
+			// consider adding coords to properties, so popups are always centered on the feature
+			// (use turf tools to get polygon centres)
 			center: e.lngLat,
 			duration: 1000,
 		});
@@ -189,7 +228,6 @@ export default function App() {
 		if (!map.current.getSource(mapboxSourceId)) mapboxAddSource();
 		// if layer(s) not loaded, load layer(s)
 		if (!map.current.getLayer(mapboxLayerId)) mapboxAddLayer();
-		// console.log(map.current.getStyle().layers);
 	}
 
 	// store geojson data in state on page load
@@ -234,32 +272,41 @@ export default function App() {
 
 	/* USER FUNCTIONS */
 
-	// setup dialog handlers
-	const [dialogOpen, setDialogOpen] = useState(false);
-	const openDialog = () => setDialogOpen(true);
-	function closeDialog() {
-		setDialogOpen(false);
-		setNewCoordinates([0, 0]);
+	function resetNewFeatureProps() {
+		setNewPointCoordinates([0, 0]);
+		setNewPolygonCoordinates([]);
 		setNewFeatureName("");
 		setNewFeatureTags("");
 		setNewFeatureNotes("");
 	}
+	// setup dialog handlers
+	const [addPointDialogOpen, setAddPointDialogOpen] = useState(false);
+	const openAddPointDialog = () => setAddPointDialogOpen(true);
+	function closeAddPointDialog() {
+		setAddPointDialogOpen(false);
+		resetNewFeatureProps();
+	}
+	const [addPolygonDialogOpen, setAddPolygonDialogOpen] = useState(false);
+	const openAddPolygonDialog = () => setAddPolygonDialogOpen(true);
+	function closeAddPolygonDialog() {
+		setAddPolygonDialogOpen(false);
+		resetNewFeatureProps();
+	}
 
-	const [newCoordinates, setNewCoordinates] = useState([0, 0]);
-	const [newFeatureName, setNewFeatureName] = useState("");
-	const [newFeatureTags, setNewFeatureTags] = useState("");
-	const [newFeatureNotes, setNewFeatureNotes] = useState("");
+	// setup state for new feature properties in progress
+	const [newFeatureName, setNewFeatureName] = useState<string>("");
+	const [newFeatureTags, setNewFeatureTags] = useState<string>("");
+	const [newFeatureNotes, setNewFeatureNotes] = useState<string>("");
+	const [newPointCoordinates, setNewPointCoordinates] = useState([0, 0]);
 
 	// add a point feature to the map (and data)
-	function addPointFeature(e: FormEvent<HTMLFormElement>) {
-		// prevent defaul form submit actions
-		e.preventDefault();
+	function addPointFeature() {
 		// build new feature object
 		const newPointFeature: GeoJSON.Feature = {
 			type: "Feature",
 			geometry: {
 				type: "Point",
-				coordinates: newCoordinates,
+				coordinates: newPointCoordinates,
 			},
 			properties: {
 				address: "",
@@ -277,7 +324,7 @@ export default function App() {
 		// update data in state
 		setGeojsonData(newData);
 		// close the dialog modal
-		closeDialog();
+		closeAddPointDialog();
 	}
 
 	function addPointListener() {
@@ -285,195 +332,79 @@ export default function App() {
 		map.current.getCanvas().style.cursor = "pointer";
 		// listen for the users click, then:
 		map.current.once("click", (e: mapboxgl.EventData) => {
-			// console.log(e.lngLat);
 			const f = map.current.queryRenderedFeatures(
 				[e.lngLat.lng, e.lngLat.lat], // probably need a borBox for wider capture
 				{ layers: ["poi-label"] } // expand to all label layers?
 			);
-			console.log(f);
+			// console.log("poi-label features", f);
 			// center map on click
 			map.current.easeTo({
 				center: e.lngLat,
 				duration: 1000,
 			});
 			// set coordinates in state
-			setNewCoordinates([e.lngLat.lng, e.lngLat.lat]);
+			setNewPointCoordinates([e.lngLat.lng, e.lngLat.lat]);
 			// return cursor to default
 			map.current.getCanvas().style.cursor = "";
 			// open properties dialog to get properties
-			openDialog();
+			openAddPointDialog();
 		});
 	}
 
-  const [newPolygon, setNewPolygon] = useState<
-		GeoJSON.LineString | GeoJSON.Polygon
-	>({ type: "LineString", coordinates: [] });
+	const [newPolygonCoordinates, setNewPolygonCoordinates] = useState<
+		number[][]
+	>([]);
 
-	// add a point feature to the map (and data)
-	function addPolygonFeature() {}
-
-  const handleMouseMove = (
-		e: mapboxgl.EventData,
-		data: GeoJSON.LineString | GeoJSON.Polygon,
-		newPoint: number
-	) => {
-		// console.log("mouse is following click number:", newPoint);
-		data.coordinates[newPoint] = [e.lngLat.lng, e.lngLat.lat];
-		// update source data
-		map.current.getSource("newPolygon").setData(data);
-		// map.current.getSource("newPolygon").setData(liveData);
-	};
-
-  function escapeNewPolygon() {}
-
-  function handleFirstClick(
-		e: mapboxgl.EventData,
-		newPolygonData: GeoJSON.LineString | GeoJSON.Polygon
-	) {
-		// on first click:
-    console.log("first click!", newPolygon);
-    // add initial point to coordinate collection/source
-    newPolygonData.coordinates.push([e.lngLat.lng, e.lngLat.lat]);
-    console.log(newPolygonData.coordinates);
-    setNewPolygon(newPolygonData);
-    // add a temporary line layer between the first point and the cursor
-    if (!map.current.getLayer("newPolygon-line")) {
-      map.current.addLayer({
-        id: "newPolygon-line",
-        source: "newPolygon",
-        type: "line",
-        paint: {
-          "line-color": "red",
-        },
-      });
-    }
-    // (start listening to mousemove)
-    // followCursor(newPolygonData);
-    const length: number = newPolygonData.coordinates.length;
-    console.log("length:", length);
-    map.current.on("mousemove", (e: mapboxgl.EventData) =>
-      handleMouseMove(e, newPolygonData, length)
-    );
+	// add a polygon feature to the map (and data)
+	function addPolygonFeature() {
+		const newPolygon: GeoJSON.Polygon = {
+			type: "Polygon",
+			coordinates: [newPolygonCoordinates],
+		};
+    // add initial point to array to complete the polygon
+		newPolygon.coordinates[0].push(newPolygon.coordinates[0][0]);
+		const newPolygonFeature: GeoJSON.Feature = {
+			type: "Feature",
+			geometry: newPolygon,
+			properties: {
+				address: "",
+				color: "",
+				created: Date.now(),
+				id: uuid(),
+				name: newFeatureName,
+				notes: newFeatureNotes,
+				tags: newFeatureTags,
+			},
+		};
+		// rebuild data with new feature
+		const newData = { ...geojsonData };
+		newData.features.push(newPolygonFeature);
+		// update data in state
+		setGeojsonData(newData);
+		// close the dialog modal
+		closeAddPolygonDialog();
 	}
 
-  function handleSecondClick(
-		e: mapboxgl.EventData,
-		newPolygonData: GeoJSON.LineString | GeoJSON.Polygon
-	) {
-		// on the second click:
-		if (newPolygon.coordinates.length === 1) {
-			console.log("second click!", newPolygon);
-			map.current.off("mousemove", (e: mapboxgl.EventData) =>
-				handleMouseMove(e, newPolygonData, length)
-			);
-			// add the second point to the coordinate collection/source
-			newPolygonData.coordinates.push([e.lngLat.lng, e.lngLat.lat]);
-			console.log(newPolygonData.coordinates);
-			// newPolygonData.type = "Polygon";
-			setNewPolygon(newPolygonData);
-			// remove the temporary line layer
-			// if (!map.current.getLayer("newPolygon-line"))
-			// 	map.current.removeLayer("newPolygon-line");
-			// // add a temporary polygon layer with two fixed points and a third at the cursor
-			// if (!map.current.getLayer("newPolygon-polygon")) {
-			// 	map.current.addLayer({
-			// 		id: "newPolygon-polygon",
-			// 		source: "newPolygon",
-			// 		type: "fill",
-			// 		paint: {
-			// 			"fill-color": "red",
-			// 			"fill-opacity": 0.25,
-			// 		},
-			// 	});
-			// }
-			// (start listening to mousemove)
-			// followCursor(newPolygonData);
-			const length: number = newPolygonData.coordinates.length;
-			console.log("length:", length);
-			map.current.on("mousemove", (e: mapboxgl.EventData) =>
-				handleMouseMove(e, newPolygonData, length)
-			);
-		}
+	useEffect(() => {
+		console.debug("newPolygonCoordinates trigger useEffect", newPolygonCoordinates);
+    // trigger conditional draft rendering from here
+	}, [newPolygonCoordinates]);
+
+	function addPolygonPointsToState(e: mapboxgl.EventData) {
+    setNewPolygonCoordinates(currentState =>  [...currentState, [e.lngLat.lng, e.lngLat.lat]]);
 	}
 
-  function handleFurtherClicks(
-		e: mapboxgl.EventData,
-		newPolygonData: GeoJSON.LineString | GeoJSON.Polygon
-	) {
-		// on third and subsquent clicks:
-    console.log(
-      "click number:",
-      newPolygon.coordinates.length + 1,
-      newPolygon
-    );
-    // remove previous listener
-    map.current.off("mousemove", (e: mapboxgl.EventData) =>
-      handleMouseMove(e, newPolygonData, length)
-    );
-    // add the point to the coordinate collection/source
-    newPolygonData.coordinates.push([e.lngLat.lng, e.lngLat.lat]);
-    console.log(newPolygonData.coordinates);
-    setNewPolygon(newPolygonData);
-    // update the temporary polygon layer (start listening to mousemove)
-    // followCursor(newPolygonData);
-    const length: number = newPolygonData.coordinates.length;
-    console.log("length:", length);
-    map.current.on("mousemove", (e: mapboxgl.EventData) =>
-      handleMouseMove(e, newPolygonData, length)
-    );
-	}
-
-	function polygonListener(e: mapboxgl.EventData) {
-    const updatedPolygon = { ...newPolygon };
-    updatedPolygon.coordinates.push([e.lngLat.lng, e.lngLat.lat]);
-    setNewPolygon(updatedPolygon);
-    console.log("newPolygon in state:", newPolygon);
-    console.log("newPolygon coordinates:", newPolygon.coordinates.length);
-    
-		// add a listener for:
-		// click "on" first point (trigger layer),
-		// map.current.once("click", (e: mapboxgl.EventData) => {
-		// 	console.log("click event", e);
-		// });
-		// // doubleclick
-		// map.current.once("dblclick", (e: mapboxgl.EventData) => {
-		// 	console.log("double click event", e);
-		// });
-		// // or esc keydown
-		// map.current.getCanvas().addEventListener("keydown", (e:Event) => {
-		//   e.preventDefault();
-		//   console.log("keydown event:", e);
-    //   if (e.which === 100) {}
-		// })
-		// handle end, depending on number of points
-		// turn off listener(s)
-		//
-		// create and add a mapbox source to temporarily render the line/polygon
-		// const newPolygonData: GeoJSON.LineString | GeoJSON.Polygon = {
-		// 	...newPolygon,
-		// };
-		// if (!map.current.getSource("newPolygon")) {
-		// 	map.current.addSource("newPolygon", {
-		// 		type: "geojson",
-		// 		data: {
-		// 			geometry: newPolygonData,
-		// 			type: "Feature",
-		// 		},
-		// 	});
-    // }
-		//
-    // if (!newPolygon.coordinates.length) handleFirstClick(e, newPolygonData);
-		// if (newPolygon.coordinates.length === 1)
-		// 	handleSecondClick(e, newPolygonData);
-		// if (newPolygon.coordinates.length > 1)
-		// 	handleFurtherClicks(e, newPolygonData);
-	}
-
-  function addPolygonListener() {
+	function addPolygonListener() {
 		// set cursor to a pointer
 		map.current.getCanvas().style.cursor = "pointer";
-		// start listening for the users click
-		map.current.on("click", polygonListener);
+		// start listening for the users clicks to add points
+		map.current.on("click", addPolygonPointsToState);
+		// start listening for a user double click to add feature
+		map.current.once("dblclick", () => {
+			map.current.off("click", addPolygonPointsToState);
+			map.current.getCanvas().style.cursor = "";
+			openAddPolygonDialog();
+		});
 	}
 
 	// erase all data
@@ -612,64 +543,29 @@ export default function App() {
 					</Tooltip>
 				</Stack>
 
-				{/* modal form for feature properties */}
-				<Dialog
-					onClose={closeDialog}
-					open={dialogOpen}
-					PaperProps={{
-						component: "form",
-						onSubmit: addPointFeature,
-					}}
-				>
-					<DialogTitle>New Feature Properties</DialogTitle>
+				<AddFeatureDialog
+					isOpen={addPointDialogOpen}
+					nameValue={newFeatureName}
+					tagsValue={newFeatureTags}
+					notesValue={newFeatureNotes}
+					nameSetter={setNewFeatureName}
+					tagsSetter={setNewFeatureTags}
+					notesSetter={setNewFeatureNotes}
+					handleAddFeature={addPointFeature}
+					handleClose={closeAddPointDialog}
+				/>
 
-					<DialogContent>
-						<DialogContentText>
-							Enter the details of your new feature:
-						</DialogContentText>
-
-						<TextField
-							autoFocus
-							required
-							margin="dense"
-							id="name"
-							name="name"
-							label="Name"
-							fullWidth
-							value={newFeatureName}
-							onChange={(e) => setNewFeatureName(e.target.value)}
-						/>
-						<TextField
-							margin="dense"
-							id="tags"
-							name="tags"
-							label="Tags"
-							fullWidth
-							value={newFeatureTags}
-							onChange={(e) => setNewFeatureTags(e.target.value)}
-						/>
-						<TextField
-							multiline
-							margin="dense"
-							id="notes"
-							name="notes"
-							label="Notes"
-							fullWidth
-							minRows={3}
-							value={newFeatureNotes}
-							onChange={(e) => setNewFeatureNotes(e.target.value)}
-						/>
-					</DialogContent>
-
-					<DialogActions sx={{ justifyContent: "center", paddingBottom: 2 }}>
-						<Button type="submit" variant="outlined">
-							Add Feature
-						</Button>
-						<Button onClick={closeDialog} variant="outlined">
-							Cancel
-						</Button>
-					</DialogActions>
-				</Dialog>
+				<AddFeatureDialog
+					isOpen={addPolygonDialogOpen}
+					nameValue={newFeatureName}
+					tagsValue={newFeatureTags}
+					notesValue={newFeatureNotes}
+					nameSetter={setNewFeatureName}
+					tagsSetter={setNewFeatureTags}
+					notesSetter={setNewFeatureNotes}
+					handleAddFeature={addPolygonFeature}
+					handleClose={closeAddPolygonDialog}
+				/>
 			</Grid>
 
 			{/* Sidebar */}
