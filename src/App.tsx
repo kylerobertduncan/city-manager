@@ -25,14 +25,15 @@ import Sidebar from "./components/Sidebar";
 // import other local modules
 import {
 	localStorageId,
-	mapboxDraftSourceId,
 	mapboxLayerId,
 	mapboxPolygonLayerId,
 	mapboxSourceId,
 	emptyFeatureCollection,
-	mapboxDraftMultiPointLayerId,
-	mapboxDraftLineLayerId,
-	mapboxDraftFillLayerId,
+  newPolygonSource,
+  newPolygonPointLayer,
+  newPolygonLineLayer,
+  liveLineSource,
+  liveLineLayer,
 } from "./variables";
 
 // add url restrictions before releasing production
@@ -98,17 +99,6 @@ export default function App() {
 			type: "geojson",
 			data: geojsonData,
 		});
-		// add draft source
-		// map.current.addSource(mapboxDraftSourceId, {
-		// 	type: "geojson",
-		// 	data: {
-		// 		type: "Feature",
-		// 		geometry: {
-		// 			type: "Polygon",
-		// 			coordinates: [newPolygonCoordinates],
-		// 		},
-		// 	},
-		// });
 	}
 
 	function mapboxAddLayer() {
@@ -150,7 +140,6 @@ export default function App() {
 				type: "circle",
 				paint: {
 					"circle-color": "transparent",
-					// "circle-opacity": 0,
 					"circle-radius": 20,
 				},
 			},
@@ -167,16 +156,6 @@ export default function App() {
 			() => (map.current.getCanvas().style.cursor = "")
 		);
 		map.current.on("click", `${mapboxLayerId}-trigger`, showLayerPopup);
-		// map.current.addLayer({
-		// 	id: mapboxDraftFillLayerId,
-		// 	source: mapboxDraftSourceId,
-		// 	type: "fill",
-		// 	paint: {
-		// 		"fill-color": "yellow",
-		// 		"fill-opacity": 0.5,
-		// 		"fill-outline-color": "blue",
-		// 	},
-		// });
 	}
 
 	function showLayerPopup(e: mapboxgl.EventData) {
@@ -200,6 +179,7 @@ export default function App() {
 		s.setData(geojsonData);
 	}
 
+  // listens for our mapbox source to load then updates data
 	function handleSourcedata(e: mapboxgl.EventData) {
 		if (e.sourceId === mapboxSourceId && e.isSourceLoaded) {
 			map.current.off("sourcedata", handleSourcedata);
@@ -275,6 +255,14 @@ export default function App() {
 	function resetNewFeatureProps() {
 		setNewPointCoordinates([0, 0]);
 		setNewPolygonCoordinates([]);
+    const p = map.current.getSource(newPolygonSource);
+		if (p) p.setData({
+      type: "Feature",
+      geometry: {
+        type: "MultiPoint",
+        coordinates: [],
+      },
+    });
 		setNewFeatureName("");
 		setNewFeatureTags("");
 		setNewFeatureNotes("");
@@ -336,7 +324,7 @@ export default function App() {
 				[e.lngLat.lng, e.lngLat.lat], // probably need a borBox for wider capture
 				{ layers: ["poi-label"] } // expand to all label layers?
 			);
-			// console.log("poi-label features", f);
+			console.log("poi-label features", f);
 			// center map on click
 			map.current.easeTo({
 				center: e.lngLat,
@@ -357,15 +345,12 @@ export default function App() {
 
 	// add a polygon feature to the map (and data)
 	function addPolygonFeature() {
-		const newPolygon: GeoJSON.Polygon = {
-			type: "Polygon",
-			coordinates: [newPolygonCoordinates],
-		};
-    // add initial point to array to complete the polygon
-		newPolygon.coordinates[0].push(newPolygon.coordinates[0][0]);
 		const newPolygonFeature: GeoJSON.Feature = {
 			type: "Feature",
-			geometry: newPolygon,
+			geometry: {
+        type: "Polygon",
+        coordinates: [newPolygonCoordinates],
+      },
 			properties: {
 				address: "",
 				color: "",
@@ -385,13 +370,140 @@ export default function App() {
 		closeAddPolygonDialog();
 	}
 
+  function calculateLiveLineCoordinates(cursorLngLat:number[] | null) {
+    const p = newPolygonCoordinates.slice(-1);
+		const lastPoint = [...p[0]];
+    if (!cursorLngLat) return [lastPoint, lastPoint];
+		else if (newPolygonCoordinates.length === 1) return [lastPoint, cursorLngLat];
+		else if (newPolygonCoordinates.length > 1) return [lastPoint, cursorLngLat, newPolygonCoordinates[0]];
+	}
+
+  function updateLiveLineData(e:mapboxgl.EventData) {
+    if (!newPolygonCoordinates.length) return;
+    const src = map.current.getSource(liveLineSource);
+    if (!src) return;
+    else {
+      src.setData({
+				type: "Feature",
+				geometry: {
+					type: "LineString",
+					coordinates: calculateLiveLineCoordinates([
+						e.lngLat.lng,
+						e.lngLat.lat,
+					]),
+				},
+			});
+    } 
+  }
+
+  function setNewPolygonLiveLine() {
+    const data = {
+			type: "Feature",
+			geometry: {
+				type: "LineString",
+				coordinates: calculateLiveLineCoordinates(null),
+			},
+		};
+		// add live/pending lines of new polygon
+		const l = map.current.getSource(liveLineSource);
+		if (!l) {
+			map.current.addSource(liveLineSource, {
+				type: "geojson",
+				data: data,
+			});
+		} else
+			l.setData(data);
+		if (!map.current.getLayer(liveLineLayer)) {
+			map.current.addLayer({
+				id: liveLineLayer,
+				source: liveLineSource,
+				type: "line",
+				paint: {
+					"line-color": "orange",
+				},
+			});
+		}
+		// start listening for mouse movement to update live lines
+		map.current.on("mousemove", updateLiveLineData);
+    // stop previous listener for mouse movement to update live lines
+    map.current.once("click", () => {
+			map.current.off("mousemove", updateLiveLineData);
+		});
+    map.current.once("dblclick", () => {
+			map.current.off("mousemove", updateLiveLineData);
+		});
+	}
+
+  function setNewPolygonDraft() {
+    const data = {
+			type: "FeatureCollection",
+			features: [
+				{
+					type: "Feature",
+					geometry: {
+						type: "LineString",
+						coordinates: newPolygonCoordinates,
+					},
+				},
+				{
+					type: "Feature",
+					geometry: {
+						type: "MultiPoint",
+						coordinates: newPolygonCoordinates,
+					},
+				},
+			],
+		};
+		// add fixed draft of new polygon
+		const p = map.current.getSource(newPolygonSource);
+		if (!p) {
+			map.current.addSource(newPolygonSource, {
+				type: "geojson",
+				data: data,
+			});
+		} else p.setData(data);
+		if (!map.current.getLayer(newPolygonLineLayer)) {
+			map.current.addLayer({
+				id: newPolygonLineLayer,
+				source: newPolygonSource,
+				type: "line",
+				paint: {
+					"line-color": "yellow",
+				},
+			});
+		}
+		if (!map.current.getLayer(newPolygonPointLayer)) {
+			map.current.addLayer({
+				id: newPolygonPointLayer,
+				source: newPolygonSource,
+				type: "circle",
+				paint: {
+					"circle-color": "yellow",
+				},
+			});
+		}
+	}
+
+  // trigger conditional draft rendering from here
 	useEffect(() => {
-		console.debug("newPolygonCoordinates trigger useEffect", newPolygonCoordinates);
-    // trigger conditional draft rendering from here
+		// avert any action on page mount
+		if (!newPolygonCoordinates.length) return;
+    // update static draft polygon
+		setNewPolygonDraft();
+    // update live lines draft polygon
+    if (
+			newPolygonCoordinates.length === 1 ||
+			newPolygonCoordinates[0] !==
+				newPolygonCoordinates[newPolygonCoordinates.length - 1]
+		)
+			setNewPolygonLiveLine();
 	}, [newPolygonCoordinates]);
 
 	function addPolygonPointsToState(e: mapboxgl.EventData) {
-    setNewPolygonCoordinates(currentState =>  [...currentState, [e.lngLat.lng, e.lngLat.lat]]);
+		setNewPolygonCoordinates((currentState) => [
+			...currentState,
+			[e.lngLat.lng, e.lngLat.lat],
+		]);
 	}
 
 	function addPolygonListener() {
@@ -400,10 +512,18 @@ export default function App() {
 		// start listening for the users clicks to add points
 		map.current.on("click", addPolygonPointsToState);
 		// start listening for a user double click to add feature
-		map.current.once("dblclick", () => {
+		map.current.once("dblclick", (e: mapboxgl.EventData) => {
+			e.preventDefault();
+      setNewPolygonCoordinates(currentState => [
+        ...currentState,
+        currentState[0]
+      ]);
 			map.current.off("click", addPolygonPointsToState);
+      map.current.off("mousemove", updateLiveLineData);
 			map.current.getCanvas().style.cursor = "";
 			openAddPolygonDialog();
+			// easeTo polygon with fitBounds
+			// get bbox (and center for popup) from turf, add to props!
 		});
 	}
 

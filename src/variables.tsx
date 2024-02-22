@@ -4,11 +4,23 @@ export const mapboxSourceId: string = "prxs-source";
 export const mapboxLayerId: string = "prxs-layer";
 export const mapboxPolygonLayerId: string = "prxs-polygon-layer";
 
-export const mapboxDraftSourceId: string = "prxs-draft-source";
-export const mapboxDraftLayerId: string = "prxs-draft-layer";
-export const mapboxDraftMultiPointLayerId: string = "prxs-draft-multipoint";
-export const mapboxDraftLineLayerId: string = "prxs-draft-line";
-export const mapboxDraftFillLayerId: string = "prxs-draft-fill";
+// polygon draft ids
+/*
+  layers:
+    - points for each click (circle): newPolygonCoordinates
+    - lines between added points (line): newPolygonCoordinates
+    - line(s) from added points and cursor (line)
+    - - one line after first click: last point + cursor lngLat, OR
+    - - two after second click: last point + cursor lngLat + first point
+*/
+// good for both multiPoint and lineString?
+// -- make a feature collection with both, same coordinates
+export const newPolygonSource: string = "prxs-newPolygon-source";
+export const newPolygonPointLayer: string = "prxs-newPolygon-circle";
+export const newPolygonLineLayer: string = "prxs-newPolygon-line";
+export const liveLineSource: string = "prxs-liveLine-source";
+export const liveLineLayer: string = "prxs-liveLine-layer";
+// maybe add a point layer as well?
 
 export interface pointProperties {
 	address: string | null;
@@ -42,7 +54,7 @@ export const newFeature: GeoJSON.Feature = {
 	},
 };
 
-const mapboxLayers = [
+export const mapboxLayers = [
 	"land (background)",
 	"landcover (fill)",
 	"national-park (fill)",
