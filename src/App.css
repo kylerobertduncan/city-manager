@@ -1,3 +1,7 @@
+html {
+  cursor: default;
+}
+
 .floatingElement {
   background-color: rgb(35 55 75 / 90%);
   color: #fff;

@@ -8,10 +8,12 @@ import FeatureCard from "./FeatureCard";
 
 export default function Sidebar({
 	geojsonData,
-  goToFeature,
+	goToFeature,
+	showFeaturePopup,
 }: {
 	geojsonData: GeoJSON.FeatureCollection;
-  goToFeature: (e:GeoJSON.Position) => void;
+	goToFeature: (e: GeoJSON.Position) => void;
+	showFeaturePopup: (e: mapboxgl.EventData) => void;
 }) {
 	return (
 		<Grid
@@ -31,11 +33,11 @@ export default function Sidebar({
 			}}
 		>
 			{/* <SidebarHeader /> */}
-      <Toolbar sx={{ bgcolor:"grey.900", position:"sticky", top:0 }}>
-        <Typography component="h1" variant="h5">
-          The Second Tradition
-        </Typography>
-      </Toolbar>
+			<Toolbar sx={{ bgcolor: "grey.900", position: "sticky", top: 0 }}>
+				<Typography component="h1" variant="h5">
+					The Second Tradition
+				</Typography>
+			</Toolbar>
 			<Container sx={{ marginTop: "24px" }}>
 				<Grid component="ul" container spacing={3} paddingLeft="0" sx={{}}>
 					{geojsonData.features.map((f: GeoJSON.Feature, i) => {
@@ -43,7 +45,11 @@ export default function Sidebar({
 						if (!f.properties) return null;
 						return (
 							<Grid component="li" item key={f.properties.id} xs={12}>
-								<FeatureCard featureData={f} goToFeature={goToFeature} />
+								<FeatureCard
+									featureData={f}
+									goToFeature={goToFeature}
+									showFeaturePopup={showFeaturePopup}
+								/>
 							</Grid>
 						);
 					})}

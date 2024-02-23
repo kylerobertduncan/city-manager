@@ -196,7 +196,7 @@ export default function App() {
 		map.current.on(
 			"click",
 			[`${mapboxLayerId}-trigger`, mapboxPolygonLayerId],
-			showFeaturePopup
+			handleFeatureClick
 		);
 	}
 
@@ -249,16 +249,26 @@ export default function App() {
     })
   }
 	
-  function showFeaturePopup(e: mapboxgl.EventData) {
-		const center = e.features[0].properties.center ? JSON.parse(e.features[0].properties.center) : e.lngLat;
-    goToFeature(center);
-		const popup = new mapboxgl.Popup({ anchor: "left" });
+  function showFeaturePopup(properties:mapboxgl.EventData) {
+    if (!properties) return;
+    // close other popups? multiple can be opened from sidebar
+    const lngLat = typeof(properties.center) == "string" ? JSON.parse(properties.center) : properties.center;
+    const popup = new mapboxgl.Popup({ anchor: "left" });
 		popup
-			.setLngLat(center)
-			.setHTML(`<h2 style="color:black;">${e.features[0].properties.name}</h2>`)
+			.setLngLat(lngLat)
+			.setHTML(`<h2 style="color:black;">${properties.name}</h2>`)
 			.setMaxWidth("300px")
 			.addTo(map.current);
 	}
+
+  function handleFeatureClick(e: mapboxgl.EventData) {
+    // handle click that captures multiple features
+    const center = e.features[0].properties.center
+			? JSON.parse(e.features[0].properties.center)
+			: e.lngLat;
+    goToFeature(center);
+		showFeaturePopup(e.features[0].properties);
+  }
 
 	/* USER FUNCTIONS */
 
@@ -703,9 +713,9 @@ export default function App() {
 
 			{/* Sidebar */}
 			{desktop ? ( // should this be in state?
-				<Sidebar geojsonData={geojsonData} goToFeature={goToFeature}/>
+				<Sidebar geojsonData={geojsonData} goToFeature={goToFeature} showFeaturePopup={showFeaturePopup}/>
 			) : (
-				<MobileSidebar geojsonData={geojsonData} goToFeature={goToFeature}/>
+				<MobileSidebar geojsonData={geojsonData} goToFeature={goToFeature} showFeaturePopup={showFeaturePopup}/>
 			)}
 		</Grid>
 	);

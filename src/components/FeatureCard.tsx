@@ -10,54 +10,64 @@ import PolylineIcon from "@mui/icons-material/Polyline";
 // import action button icons
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
-// import ExpandCircleDownIcon from "@mui/icons-material/ExpandCircleDown";
-import MyLocationIcon from "@mui/icons-material/MyLocation";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 
 export default function FeatureCard({
 	featureData,
 	goToFeature,
+	showFeaturePopup,
 }: {
 	featureData: GeoJSON.Feature;
 	goToFeature: (e: GeoJSON.Position) => void;
+	showFeaturePopup: (e: mapboxgl.EventData) => void;
 }) {
 	if (!featureData.properties) return null;
 	// console.log(featureData);
 
-	const { address, id, name, notes, tags } = featureData.properties;
+	const { address, name, notes, tags } = featureData.properties;
 	return (
 		<Card raised>
 			<CardHeader
 				avatar={
-					featureData.geometry.type === "Point" ? (
-						<PlaceIcon />
-					) : (
-						<PolylineIcon />
-					)
+					<IconButton
+						aria-label="View feature on map"
+						onClick={() => {
+							goToFeature(featureData.properties!.center);
+							showFeaturePopup(featureData.properties!);
+						}}
+						size="small"
+					>
+						{featureData.geometry.type === "Point" ? (
+							<PlaceIcon />
+						) : (
+							<PolylineIcon />
+						)}
+					</IconButton>
 				}
 				title={name ? name : "Location Name"}
 				titleTypographyProps={{ component: "h2", variant: "h5" }}
-				subheader={address ? address : null}
+				// subheader={address ? address : null}
+				subheader="Subheader (address?) goes here"
+				action={
+					<IconButton aria-label="Edit feature" disabled size="small">
+						<MoreVertIcon />
+					</IconButton>
+				}
 			/>
 			<CardContent>
+				{/* switch tags and address? */}
 				<Typography gutterBottom>{tags ? tags : "Tags"}</Typography>
 				{/* Add collapse to show/hide notes and other details */}
 				<Typography variant="body2">{notes ? notes : "Notes"}</Typography>
-				{/* <Typography fontSize={12}>ID: {id}</Typography> */}
-				{/* Replace ID with address (when available) */}
 			</CardContent>
+			{/* move this to a pop out menu at top right */}
 			<CardActions>
-				<IconButton aria-label="View feature on map" onClick={() => goToFeature(featureData.properties!.center)}>
-					<MyLocationIcon />
-				</IconButton>
-				<IconButton aria-label="Edit feature">
+				<IconButton aria-label="Edit feature" disabled size="small">
 					<EditIcon />
 				</IconButton>
-				<IconButton aria-label="Delete feature">
+				<IconButton aria-label="Delete feature" disabled size="small">
 					<DeleteIcon />
 				</IconButton>
-				{/* <IconButton disabled>
-          <ExpandCircleDownIcon />
-        </IconButton> */}
 			</CardActions>
 		</Card>
 	);

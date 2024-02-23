@@ -14,10 +14,12 @@ import FeatureCard from "./FeatureCard";
 
 export default function MobileSidebar({
 	geojsonData,
-  goToFeature,
+	goToFeature,
+  showFeaturePopup,
 }: {
 	geojsonData: GeoJSON.FeatureCollection;
 	goToFeature: (e: GeoJSON.Position) => void;
+	showFeaturePopup: (e: mapboxgl.EventData) => void;
 }) {
 	const [drawerOpen, setDrawerOpen] = useState(false);
 	const openDrawer = () => setDrawerOpen(true);
@@ -90,7 +92,11 @@ export default function MobileSidebar({
 									if (!f.properties) return null;
 									return (
 										<Grid component="li" item key={f.properties.id} xs={12}>
-											<FeatureCard featureData={f} goToFeature={goToFeature} />
+											<FeatureCard
+												featureData={f}
+												goToFeature={goToFeature}
+												showFeaturePopup={showFeaturePopup}
+											/>
 										</Grid>
 									);
 								})}
