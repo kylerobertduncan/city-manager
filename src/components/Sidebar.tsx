@@ -8,8 +8,10 @@ import FeatureCard from "./FeatureCard";
 
 export default function Sidebar({
 	geojsonData,
+  goToFeature,
 }: {
 	geojsonData: GeoJSON.FeatureCollection;
+  goToFeature: (e:GeoJSON.Position) => void;
 }) {
 	return (
 		<Grid
@@ -41,7 +43,7 @@ export default function Sidebar({
 						if (!f.properties) return null;
 						return (
 							<Grid component="li" item key={f.properties.id} xs={12}>
-								<FeatureCard featureData={f} />
+								<FeatureCard featureData={f} goToFeature={goToFeature} />
 							</Grid>
 						);
 					})}

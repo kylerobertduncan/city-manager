@@ -14,8 +14,10 @@ import FeatureCard from "./FeatureCard";
 
 export default function MobileSidebar({
 	geojsonData,
+  goToFeature,
 }: {
 	geojsonData: GeoJSON.FeatureCollection;
+	goToFeature: (e: GeoJSON.Position) => void;
 }) {
 	const [drawerOpen, setDrawerOpen] = useState(false);
 	const openDrawer = () => setDrawerOpen(true);
@@ -59,8 +61,8 @@ export default function MobileSidebar({
 								bgcolor: "grey.900",
 								display: "flex",
 								justifyContent: "space-between",
-                position: "sticky",
-                top: 0
+								position: "sticky",
+								top: 0,
 							}}
 						>
 							<Typography component="h1" variant="h5">
@@ -88,7 +90,7 @@ export default function MobileSidebar({
 									if (!f.properties) return null;
 									return (
 										<Grid component="li" item key={f.properties.id} xs={12}>
-											<FeatureCard featureData={f} />
+											<FeatureCard featureData={f} goToFeature={goToFeature} />
 										</Grid>
 									);
 								})}

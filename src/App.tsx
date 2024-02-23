@@ -2,6 +2,7 @@
 import mapboxgl from "mapbox-gl";
 import { useEffect, useRef, useState } from "react";
 import { v4 as uuid } from "uuid";
+import { bbox, centerOfMass } from "@turf/turf";
 // import material ui components
 import Box from "@mui/material/Box";
 import Grid from "@mui/material/Grid";
@@ -11,9 +12,9 @@ import Tooltip from "@mui/material/Tooltip";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { useTheme } from "@mui/material/styles";
 // import material ui icons
-import ExploreIcon from "@mui/icons-material/Explore";
-import PlaceIcon from "@mui/icons-material/Place";
+import ExploreIcon from "@mui/icons-material/Explore"; // better icon for selecting?
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
+import PlaceIcon from "@mui/icons-material/Place";
 import PolylineIcon from "@mui/icons-material/Polyline";
 import RouteIcon from "@mui/icons-material/Route";
 // import styles
@@ -29,11 +30,11 @@ import {
 	mapboxPolygonLayerId,
 	mapboxSourceId,
 	emptyFeatureCollection,
-  newPolygonSource,
-  newPolygonPointLayer,
-  newPolygonLineLayer,
-  liveLineSource,
-  liveLineLayer,
+	newPolygonSource,
+	newPolygonPointLayer,
+	newPolygonLineLayer,
+	liveLineSource,
+	liveLineLayer,
 } from "./variables";
 
 // add url restrictions before releasing production
@@ -56,23 +57,61 @@ export default function App() {
 		emptyFeatureCollection
 	);
 
-	// possible alternative to useEffect with geojsonData dependency (i.e. call instead of setGeojsonData)
-	// function updateGeojsonData(newData: GeoJSON.FeatureCollection) {
-	//   if (!geojsonData.features.length) {
-	//     if (window.confirm("You're about to overwrite any save features with an empty geojson object. Do you want to Continue?")) return;
-	//   }
-	//   // convert current data to a string and update localStorage
-	//   try {
-	//     const s = JSON.stringify(newData);
-	//     if (s) localStorage.setItem(localStorageId, s);
-	//     // catch and report any errors
-	//   } catch (error: any) {
-	//     console.error("Error updating localStorage:", error.message);
-	//   }
-	// 	setGeojsonData(newData);
-	// 	// update mapbox data
-	// 	mapboxUpdateData();
-	// }
+	/*
+    // possible alternative to useEffect with geojsonData dependency (i.e. call instead of setGeojsonData)
+    function updateGeojsonData(newData: GeoJSON.FeatureCollection) {
+      if (!geojsonData.features.length) {
+        if (window.confirm("You're about to overwrite any save features with an empty geojson object. Do you want to Continue?")) return;
+      }
+      // convert current data to a string and update localStorage
+      try {
+        const s = JSON.stringify(newData);
+        if (s) localStorage.setItem(localStorageId, s);
+        // catch and report any errors
+      } catch (error: any) {
+        console.error("Error updating localStorage:", error.message);
+      }
+      setGeojsonData(newData);
+      // update mapbox data
+      mapboxUpdateData();
+    }
+  */
+
+	// get local storage and initialize map once on page load
+	useEffect(() => {
+		initializeLocalStorage();
+		mapboxSetup();
+	}, []);
+
+	// store geojson data in state on page load
+	function initializeLocalStorage() {
+		// get item from localStorage,
+		const item = localStorage.getItem(localStorageId);
+		// it no item, reset storage to create empty feature collection item
+		// if (!item) clearAllData();
+		// what if localStorage is lost (cache cleared) but data is still present in state? Worth preserving state?
+		try {
+			if (!item) return;
+			const data: GeoJSON.FeatureCollection = JSON.parse(item);
+			if (data) setGeojsonData(data);
+		} catch (error: any) {
+			// Handle the error here
+			console.error("Error loading data from localStorage:", error.message);
+			clearAllData();
+		}
+	}
+
+	function mapboxSetup() {
+		// if no map initialise map
+		if (!map.current) mapboxInit();
+		// if map not loaded, re-run when loaded
+		if (!map.current.loaded()) map.current.on("load", mapboxSetup);
+		if (!map.current.isStyleLoaded()) return;
+		// if source not loaded, load source
+		if (!map.current.getSource(mapboxSourceId)) mapboxAddCoreSource();
+		// if layer(s) not loaded, load layer(s)
+		if (!map.current.getLayer(mapboxLayerId)) mapboxAddCoreLayers();
+	}
 
 	// extrapolate map and functions to a separate class module?
 	function mapboxInit() {
@@ -92,7 +131,7 @@ export default function App() {
 		});
 	}
 
-	function mapboxAddSource() {
+	function mapboxAddCoreSource() {
 		if (map.current.getSource(mapboxSourceId)) return;
 		// add source
 		map.current.addSource(mapboxSourceId, {
@@ -101,7 +140,7 @@ export default function App() {
 		});
 	}
 
-	function mapboxAddLayer() {
+	function mapboxAddCoreLayers() {
 		if (map.current.getLayer(mapboxLayerId)) return;
 		map.current.addLayer(
 			{
@@ -114,8 +153,7 @@ export default function App() {
 					"fill-opacity": 0.5,
 				},
 			},
-      "land-structure-polygon",
-
+			"land-structure-polygon"
 		);
 		// add layer
 		map.current.addLayer(
@@ -147,92 +185,20 @@ export default function App() {
 		);
 		map.current.on(
 			"mouseenter",
-			`${mapboxLayerId}-trigger`,
+			[`${mapboxLayerId}-trigger`, mapboxPolygonLayerId],
 			() => (map.current.getCanvas().style.cursor = "pointer")
 		);
 		map.current.on(
 			"mouseleave",
-			`${mapboxLayerId}-trigger`,
+			[`${mapboxLayerId}-trigger`, mapboxPolygonLayerId],
 			() => (map.current.getCanvas().style.cursor = "")
 		);
-		map.current.on("click", `${mapboxLayerId}-trigger`, showLayerPopup);
+		map.current.on(
+			"click",
+			[`${mapboxLayerId}-trigger`, mapboxPolygonLayerId],
+			showFeaturePopup
+		);
 	}
-
-	function showLayerPopup(e: mapboxgl.EventData) {
-		// console.log(e.features, e.target);
-		map.current.easeTo({
-			// consider adding coords to properties, so popups are always centered on the feature
-			// (use turf tools to get polygon centres)
-			center: e.lngLat,
-			duration: 1000,
-		});
-		const popup = new mapboxgl.Popup({ anchor: "left" });
-		popup
-			.setLngLat(e.lngLat)
-			.setHTML(`<h2 style="color:black;">${e.features[0].properties.name}</h2>`)
-			.setMaxWidth("300px")
-			.addTo(map.current);
-	}
-
-	function mapboxSetData() {
-		const s = map.current.getSource(mapboxSourceId);
-		s.setData(geojsonData);
-	}
-
-  // listens for our mapbox source to load then updates data
-	function handleSourcedata(e: mapboxgl.EventData) {
-		if (e.sourceId === mapboxSourceId && e.isSourceLoaded) {
-			map.current.off("sourcedata", handleSourcedata);
-			mapboxSetData();
-		}
-	}
-
-	function mapboxUpdateData() {
-		// mapbox update triggered
-		if (
-			map.current.getSource(mapboxSourceId) &&
-			map.current.isSourceLoaded(mapboxSourceId)
-		)
-			mapboxSetData();
-		// Fired when one of the map's sources loads or changes
-		else map.current.on("sourcedata", handleSourcedata);
-	}
-
-	function mapboxSetup() {
-		// if no map initialise map
-		if (!map.current) mapboxInit();
-		// if map not loaded, re-run when loaded
-		if (!map.current.loaded()) map.current.on("load", mapboxSetup);
-		if (!map.current.isStyleLoaded()) return;
-		// if source not loaded, load source
-		if (!map.current.getSource(mapboxSourceId)) mapboxAddSource();
-		// if layer(s) not loaded, load layer(s)
-		if (!map.current.getLayer(mapboxLayerId)) mapboxAddLayer();
-	}
-
-	// store geojson data in state on page load
-	function initializeLocalStorage() {
-		// get item from localStorage,
-		const item = localStorage.getItem(localStorageId);
-		// it no item, reset storage to create empty feature collection item
-		// if (!item) clearAllData();
-		// what if localStorage is lost (cache cleared) but data is still present in state? Worth preserving state?
-		try {
-			if (!item) return;
-			const data: GeoJSON.FeatureCollection = JSON.parse(item);
-			if (data) setGeojsonData(data);
-		} catch (error: any) {
-			// Handle the error here
-			console.error("Error loading data from localStorage:", error.message);
-			clearAllData();
-		}
-	}
-
-	// get local storage and initialize map once on page load
-	useEffect(() => {
-		initializeLocalStorage();
-		mapboxSetup();
-	}, []);
 
 	// update localStorage and Mapbox when data in state changes
 	useEffect(() => {
@@ -247,22 +213,67 @@ export default function App() {
 			console.error("Error updating localStorage:", error.message);
 		}
 		// update mapbox data
-		mapboxUpdateData();
+		mapboxUpdateCoreData();
 	}, [geojsonData]);
+
+	function mapboxUpdateCoreData() {
+		// mapbox update triggered
+		if (
+			map.current.getSource(mapboxSourceId) &&
+			map.current.isSourceLoaded(mapboxSourceId)
+		)
+			mapboxSetCoreData();
+		// Fired when one of the map's sources loads or changes
+		else map.current.on("sourcedata", handleCoreSourceData);
+	}
+
+	// listens for our mapbox source to load then updates data
+	function handleCoreSourceData(e: mapboxgl.EventData) {
+		if (e.sourceId === mapboxSourceId && e.isSourceLoaded) {
+			map.current.off("sourcedata", handleCoreSourceData);
+			mapboxSetCoreData();
+		}
+	}
+
+	function mapboxSetCoreData() {
+		const s = map.current.getSource(mapboxSourceId);
+		s.setData(geojsonData);
+	}
+
+	/* MAPBOX UTILITY FUNCTIONS IN RESPONSE TO USER INTERACTIONS */
+
+  function goToFeature(lngLat:GeoJSON.Position) {
+    map.current.easeTo({
+      center: lngLat,
+      duration: 1000,
+    })
+  }
+	
+  function showFeaturePopup(e: mapboxgl.EventData) {
+		const center = e.features[0].properties.center ? JSON.parse(e.features[0].properties.center) : e.lngLat;
+    goToFeature(center);
+		const popup = new mapboxgl.Popup({ anchor: "left" });
+		popup
+			.setLngLat(center)
+			.setHTML(`<h2 style="color:black;">${e.features[0].properties.name}</h2>`)
+			.setMaxWidth("300px")
+			.addTo(map.current);
+	}
 
 	/* USER FUNCTIONS */
 
 	function resetNewFeatureProps() {
 		setNewPointCoordinates([0, 0]);
 		setNewPolygonCoordinates([]);
-    const p = map.current.getSource(newPolygonSource);
-		if (p) p.setData({
-      type: "Feature",
-      geometry: {
-        type: "MultiPoint",
-        coordinates: [],
-      },
-    });
+		const p = map.current.getSource(newPolygonSource);
+		if (p)
+			p.setData({
+				type: "Feature",
+				geometry: {
+					type: "MultiPoint",
+					coordinates: [],
+				},
+			});
 		setNewFeatureName("");
 		setNewFeatureTags("");
 		setNewFeatureNotes("");
@@ -298,6 +309,7 @@ export default function App() {
 			},
 			properties: {
 				address: "",
+        center: newPointCoordinates,
 				color: "",
 				created: Date.now(),
 				id: uuid(),
@@ -326,10 +338,7 @@ export default function App() {
 			);
 			console.log("poi-label features", f);
 			// center map on click
-			map.current.easeTo({
-				center: e.lngLat,
-				duration: 1000,
-			});
+      goToFeature(e.lngLat);
 			// set coordinates in state
 			setNewPointCoordinates([e.lngLat.lng, e.lngLat.lat]);
 			// return cursor to default
@@ -348,11 +357,12 @@ export default function App() {
 		const newPolygonFeature: GeoJSON.Feature = {
 			type: "Feature",
 			geometry: {
-        type: "Polygon",
-        coordinates: [newPolygonCoordinates],
-      },
+				type: "Polygon",
+				coordinates: [newPolygonCoordinates],
+			},
 			properties: {
 				address: "",
+        center: [],
 				color: "",
 				created: Date.now(),
 				id: uuid(),
@@ -361,7 +371,10 @@ export default function App() {
 				tags: newFeatureTags,
 			},
 		};
-		// rebuild data with new feature
+    const center = centerOfMass(newPolygonFeature.geometry);
+    newPolygonFeature.properties!.bbox = bbox(newPolygonFeature.geometry);
+    newPolygonFeature.properties!.center = center.geometry.coordinates;
+    // rebuild data with new feature
 		const newData = { ...geojsonData };
 		newData.features.push(newPolygonFeature);
 		// update data in state
@@ -370,20 +383,22 @@ export default function App() {
 		closeAddPolygonDialog();
 	}
 
-  function calculateLiveLineCoordinates(cursorLngLat:number[] | null) {
-    const p = newPolygonCoordinates.slice(-1);
+	function calculateLiveLineCoordinates(cursorLngLat: number[] | null) {
+		const p = newPolygonCoordinates.slice(-1);
 		const lastPoint = [...p[0]];
-    if (!cursorLngLat) return [lastPoint, lastPoint];
-		else if (newPolygonCoordinates.length === 1) return [lastPoint, cursorLngLat];
-		else if (newPolygonCoordinates.length > 1) return [lastPoint, cursorLngLat, newPolygonCoordinates[0]];
+		if (!cursorLngLat) return [lastPoint, lastPoint];
+		else if (newPolygonCoordinates.length === 1)
+			return [lastPoint, cursorLngLat];
+		else if (newPolygonCoordinates.length > 1)
+			return [lastPoint, cursorLngLat, newPolygonCoordinates[0]];
 	}
 
-  function updateLiveLineData(e:mapboxgl.EventData) {
-    if (!newPolygonCoordinates.length) return;
-    const src = map.current.getSource(liveLineSource);
-    if (!src) return;
-    else {
-      src.setData({
+	function updateLiveLineData(e: mapboxgl.EventData) {
+		if (!newPolygonCoordinates.length) return;
+		const src = map.current.getSource(liveLineSource);
+		if (!src) return;
+		else {
+			src.setData({
 				type: "Feature",
 				geometry: {
 					type: "LineString",
@@ -393,11 +408,11 @@ export default function App() {
 					]),
 				},
 			});
-    } 
-  }
+		}
+	}
 
-  function setNewPolygonLiveLine() {
-    const data = {
+	function setNewPolygonLiveLine() {
+		const data = {
 			type: "Feature",
 			geometry: {
 				type: "LineString",
@@ -411,8 +426,7 @@ export default function App() {
 				type: "geojson",
 				data: data,
 			});
-		} else
-			l.setData(data);
+		} else l.setData(data);
 		if (!map.current.getLayer(liveLineLayer)) {
 			map.current.addLayer({
 				id: liveLineLayer,
@@ -425,17 +439,17 @@ export default function App() {
 		}
 		// start listening for mouse movement to update live lines
 		map.current.on("mousemove", updateLiveLineData);
-    // stop previous listener for mouse movement to update live lines
-    map.current.once("click", () => {
+		// stop previous listener for mouse movement to update live lines
+		map.current.once("click", () => {
 			map.current.off("mousemove", updateLiveLineData);
 		});
-    map.current.once("dblclick", () => {
+		map.current.once("dblclick", () => {
 			map.current.off("mousemove", updateLiveLineData);
 		});
 	}
 
-  function setNewPolygonDraft() {
-    const data = {
+	function setNewPolygonDraft() {
+		const data = {
 			type: "FeatureCollection",
 			features: [
 				{
@@ -484,14 +498,14 @@ export default function App() {
 		}
 	}
 
-  // trigger conditional draft rendering from here
+	// trigger conditional draft rendering from here
 	useEffect(() => {
 		// avert any action on page mount
 		if (!newPolygonCoordinates.length) return;
-    // update static draft polygon
+		// update static draft polygon
 		setNewPolygonDraft();
-    // update live lines draft polygon
-    if (
+		// update live lines draft polygon
+		if (
 			newPolygonCoordinates.length === 1 ||
 			newPolygonCoordinates[0] !==
 				newPolygonCoordinates[newPolygonCoordinates.length - 1]
@@ -514,16 +528,15 @@ export default function App() {
 		// start listening for a user double click to add feature
 		map.current.once("dblclick", (e: mapboxgl.EventData) => {
 			e.preventDefault();
-      setNewPolygonCoordinates(currentState => [
-        ...currentState,
-        currentState[0]
-      ]);
+			setNewPolygonCoordinates((currentState) => [
+				...currentState,
+				currentState[0],
+			]);
 			map.current.off("click", addPolygonPointsToState);
-      map.current.off("mousemove", updateLiveLineData);
+			map.current.off("mousemove", updateLiveLineData);
 			map.current.getCanvas().style.cursor = "";
 			openAddPolygonDialog();
-			// easeTo polygon with fitBounds
-			// get bbox (and center for popup) from turf, add to props!
+			// easeTo polygon with fitBounds;
 		});
 	}
 
@@ -690,9 +703,9 @@ export default function App() {
 
 			{/* Sidebar */}
 			{desktop ? ( // should this be in state?
-				<Sidebar geojsonData={geojsonData} />
+				<Sidebar geojsonData={geojsonData} goToFeature={goToFeature}/>
 			) : (
-				<MobileSidebar geojsonData={geojsonData} />
+				<MobileSidebar geojsonData={geojsonData} goToFeature={goToFeature}/>
 			)}
 		</Grid>
 	);
