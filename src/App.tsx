@@ -80,7 +80,7 @@ export default function App() {
 	// get local storage and initialize map once on page load
 	useEffect(() => {
 		initializeLocalStorage();
-		mapboxSetup();
+    mapboxSetup();
 	}, []);
 
 	// store geojson data in state on page load
@@ -97,7 +97,7 @@ export default function App() {
 		} catch (error: any) {
 			// Handle the error here
 			console.error("Error loading data from localStorage:", error.message);
-			clearAllData();
+			deleteAllFeatures();
 		}
 	}
 
@@ -203,7 +203,8 @@ export default function App() {
 	// update localStorage and Mapbox when data in state changes
 	useEffect(() => {
 		// prevents overwriting localStorage with empty collection on load
-		if (!geojsonData.features.length) return;
+		if (!geojsonData.features.length && !map.current.getSource(mapboxSourceId))
+			return;
 		// convert current data to a string and update localStorage
 		try {
 			const s = JSON.stringify(geojsonData);
@@ -242,18 +243,21 @@ export default function App() {
 
 	/* MAPBOX UTILITY FUNCTIONS IN RESPONSE TO USER INTERACTIONS */
 
-  function goToFeature(lngLat:GeoJSON.Position) {
-    map.current.easeTo({
-      center: lngLat,
-      duration: 1000,
-    })
-  }
-	
-  function showFeaturePopup(properties:mapboxgl.EventData) {
-    if (!properties) return;
-    // close other popups? multiple can be opened from sidebar
-    const lngLat = typeof(properties.center) == "string" ? JSON.parse(properties.center) : properties.center;
-    const popup = new mapboxgl.Popup({ anchor: "left" });
+	function goToFeature(lngLat: GeoJSON.Position) {
+		map.current.easeTo({
+			center: lngLat,
+			duration: 1000,
+		});
+	}
+
+	function showFeaturePopup(properties: mapboxgl.EventData) {
+		if (!properties) return;
+		// close other popups? multiple can be opened from sidebar
+		const lngLat =
+			typeof properties.center == "string"
+				? JSON.parse(properties.center)
+				: properties.center;
+		const popup = new mapboxgl.Popup({ anchor: "left" });
 		popup
 			.setLngLat(lngLat)
 			.setHTML(`<h2 style="color:black;">${properties.name}</h2>`)
@@ -261,16 +265,16 @@ export default function App() {
 			.addTo(map.current);
 	}
 
-  function handleFeatureClick(e: mapboxgl.EventData) {
-    // handle click that captures multiple features
-    const center = e.features[0].properties.center
+	function handleFeatureClick(e: mapboxgl.EventData) {
+		// handle click that captures multiple features
+		const center = e.features[0].properties.center
 			? JSON.parse(e.features[0].properties.center)
 			: e.lngLat;
-    goToFeature(center);
+		goToFeature(center);
 		showFeaturePopup(e.features[0].properties);
-  }
+	}
 
-	/* USER FUNCTIONS */
+	/* ADDING FEATURES */
 
 	function resetNewFeatureProps() {
 		setNewPointCoordinates([0, 0]);
@@ -319,7 +323,7 @@ export default function App() {
 			},
 			properties: {
 				address: "",
-        center: newPointCoordinates,
+				center: newPointCoordinates,
 				color: "",
 				created: Date.now(),
 				id: uuid(),
@@ -348,7 +352,7 @@ export default function App() {
 			);
 			console.log("poi-label features", f);
 			// center map on click
-      goToFeature(e.lngLat);
+			goToFeature(e.lngLat);
 			// set coordinates in state
 			setNewPointCoordinates([e.lngLat.lng, e.lngLat.lat]);
 			// return cursor to default
@@ -372,7 +376,7 @@ export default function App() {
 			},
 			properties: {
 				address: "",
-        center: [],
+				center: [],
 				color: "",
 				created: Date.now(),
 				id: uuid(),
@@ -381,10 +385,10 @@ export default function App() {
 				tags: newFeatureTags,
 			},
 		};
-    const center = centerOfMass(newPolygonFeature.geometry);
-    newPolygonFeature.properties!.bbox = bbox(newPolygonFeature.geometry);
-    newPolygonFeature.properties!.center = center.geometry.coordinates;
-    // rebuild data with new feature
+		const center = centerOfMass(newPolygonFeature.geometry);
+		newPolygonFeature.properties!.bbox = bbox(newPolygonFeature.geometry);
+		newPolygonFeature.properties!.center = center.geometry.coordinates;
+		// rebuild data with new feature
 		const newData = { ...geojsonData };
 		newData.features.push(newPolygonFeature);
 		// update data in state
@@ -550,9 +554,23 @@ export default function App() {
 		});
 	}
 
+	/* ADDING FEATURES */
+
+  function deleteFeature(uuid:string) {
+		if (!window.confirm("Are you sure you want to delete this feature?")) return;
+		const updatedFeatureCollection = {
+			...geojsonData,
+			features: geojsonData.features.filter(
+				(feature) => feature.properties!.id !== uuid
+			),
+		};
+    setGeojsonData(updatedFeatureCollection);
+	}
+
 	// erase all data
-	function clearAllData() {
-		if (!window.confirm("Erase all data?")) return;
+	function deleteAllFeatures() {
+		if (!window.confirm("Are you sure you want to delete ALL features?"))
+			return;
 		// update mapbox data with an empty feature collection
 		const s = map.current.getSource(mapboxSourceId);
 		if (!s) return;
@@ -565,6 +583,17 @@ export default function App() {
 		// reset data in state with an empty feature collection
 		setGeojsonData(emptyFeatureCollection);
 	}
+
+  /* prop packages */
+  const featureCardFunctions: {
+		goToFeature: (e: GeoJSON.Position) => void;
+		showFeaturePopup: (e: mapboxgl.EventData) => void;
+		deleteFeature: (id: string) => void;
+	} = {
+		goToFeature: goToFeature,
+		showFeaturePopup: showFeaturePopup,
+		deleteFeature: deleteFeature,
+	};
 
 	return (
 		<Grid container className="App">
@@ -674,7 +703,7 @@ export default function App() {
 					{/* </Tooltip> */}
 					<Tooltip title="Delete all features">
 						<Button
-							onClick={clearAllData}
+							onClick={deleteAllFeatures}
 							variant="contained"
 							sx={{
 								minWidth: "auto",
@@ -713,9 +742,15 @@ export default function App() {
 
 			{/* Sidebar */}
 			{desktop ? ( // should this be in state?
-				<Sidebar geojsonData={geojsonData} goToFeature={goToFeature} showFeaturePopup={showFeaturePopup}/>
+				<Sidebar
+					geojsonData={geojsonData}
+					featureCardFunctions={featureCardFunctions}
+				/>
 			) : (
-				<MobileSidebar geojsonData={geojsonData} goToFeature={goToFeature} showFeaturePopup={showFeaturePopup}/>
+				<MobileSidebar
+					geojsonData={geojsonData}
+					featureCardFunctions={featureCardFunctions}
+				/>
 			)}
 		</Grid>
 	);

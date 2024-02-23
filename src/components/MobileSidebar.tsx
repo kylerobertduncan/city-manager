@@ -14,12 +14,18 @@ import FeatureCard from "./FeatureCard";
 
 export default function MobileSidebar({
 	geojsonData,
-	goToFeature,
-  showFeaturePopup,
+	featureCardFunctions,
+	// goToFeature,
+	// showFeaturePopup,
 }: {
 	geojsonData: GeoJSON.FeatureCollection;
-	goToFeature: (e: GeoJSON.Position) => void;
-	showFeaturePopup: (e: mapboxgl.EventData) => void;
+	featureCardFunctions: {
+		goToFeature: (e: GeoJSON.Position) => void;
+		showFeaturePopup: (e: mapboxgl.EventData) => void;
+		deleteFeature: (id:string) => void;
+	};
+	// goToFeature: (e: GeoJSON.Position) => void;
+	// showFeaturePopup: (e: mapboxgl.EventData) => void;
 }) {
 	const [drawerOpen, setDrawerOpen] = useState(false);
 	const openDrawer = () => setDrawerOpen(true);
@@ -94,8 +100,9 @@ export default function MobileSidebar({
 										<Grid component="li" item key={f.properties.id} xs={12}>
 											<FeatureCard
 												featureData={f}
-												goToFeature={goToFeature}
-												showFeaturePopup={showFeaturePopup}
+												{...featureCardFunctions}
+												// goToFeature={goToFeature}
+												// showFeaturePopup={showFeaturePopup}
 											/>
 										</Grid>
 									);

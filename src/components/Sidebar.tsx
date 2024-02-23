@@ -8,12 +8,14 @@ import FeatureCard from "./FeatureCard";
 
 export default function Sidebar({
 	geojsonData,
-	goToFeature,
-	showFeaturePopup,
+	featureCardFunctions,
 }: {
 	geojsonData: GeoJSON.FeatureCollection;
-	goToFeature: (e: GeoJSON.Position) => void;
-	showFeaturePopup: (e: mapboxgl.EventData) => void;
+	featureCardFunctions: {
+		goToFeature: (e: GeoJSON.Position) => void;
+		showFeaturePopup: (e: mapboxgl.EventData) => void;
+		deleteFeature: (id: string) => void;
+	};
 }) {
 	return (
 		<Grid
@@ -47,8 +49,9 @@ export default function Sidebar({
 							<Grid component="li" item key={f.properties.id} xs={12}>
 								<FeatureCard
 									featureData={f}
-									goToFeature={goToFeature}
-									showFeaturePopup={showFeaturePopup}
+									{...featureCardFunctions}
+									// goToFeature={goToFeature}
+									// showFeaturePopup={showFeaturePopup}
 								/>
 							</Grid>
 						);

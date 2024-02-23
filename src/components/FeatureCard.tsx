@@ -16,10 +16,12 @@ export default function FeatureCard({
 	featureData,
 	goToFeature,
 	showFeaturePopup,
+	deleteFeature,
 }: {
 	featureData: GeoJSON.Feature;
 	goToFeature: (e: GeoJSON.Position) => void;
 	showFeaturePopup: (e: mapboxgl.EventData) => void;
+	deleteFeature: (id: string) => void;
 }) {
 	if (!featureData.properties) return null;
 	// console.log(featureData);
@@ -46,8 +48,7 @@ export default function FeatureCard({
 				}
 				title={name ? name : "Location Name"}
 				titleTypographyProps={{ component: "h2", variant: "h5" }}
-				// subheader={address ? address : null}
-				subheader="Subheader (address?) goes here"
+				subheader={address ? address : "Subheader (address?) here"}
 				action={
 					<IconButton aria-label="Edit feature" disabled size="small">
 						<MoreVertIcon />
@@ -65,7 +66,11 @@ export default function FeatureCard({
 				<IconButton aria-label="Edit feature" disabled size="small">
 					<EditIcon />
 				</IconButton>
-				<IconButton aria-label="Delete feature" disabled size="small">
+				<IconButton
+					aria-label="Delete feature"
+					onClick={() => deleteFeature(featureData.properties!.id)}
+					size="small"
+				>
 					<DeleteIcon />
 				</IconButton>
 			</CardActions>
