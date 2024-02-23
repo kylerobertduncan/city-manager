@@ -26,7 +26,7 @@ export default function FeatureCard({
 	if (!featureData.properties) return null;
 	// console.log(featureData);
 
-	const { address, name, notes, tags } = featureData.properties;
+  const { address, name, notes, tags } = featureData.properties;
 	return (
 		<Card raised>
 			<CardHeader

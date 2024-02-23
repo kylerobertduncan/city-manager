@@ -19,6 +19,7 @@ import PolylineIcon from "@mui/icons-material/Polyline";
 import RouteIcon from "@mui/icons-material/Route";
 // import styles
 import "./App.css";
+// import mapHandler from "./mapHandler";
 // import components
 import AddFeatureDialog from "./components/AddFeatureDialog";
 import MobileSidebar from "./components/MobileSidebar";
@@ -56,7 +57,7 @@ export default function App() {
 	const [geojsonData, setGeojsonData] = useState<GeoJSON.FeatureCollection>(
 		emptyFeatureCollection
 	);
-
+  
 	/*
     // possible alternative to useEffect with geojsonData dependency (i.e. call instead of setGeojsonData)
     function updateGeojsonData(newData: GeoJSON.FeatureCollection) {
@@ -79,12 +80,6 @@ export default function App() {
 
 	// get local storage and initialize map once on page load
 	useEffect(() => {
-		initializeLocalStorage();
-    mapboxSetup();
-	}, []);
-
-	// store geojson data in state on page load
-	function initializeLocalStorage() {
 		// get item from localStorage,
 		const item = localStorage.getItem(localStorageId);
 		// it no item, reset storage to create empty feature collection item
@@ -99,7 +94,8 @@ export default function App() {
 			console.error("Error loading data from localStorage:", error.message);
 			deleteAllFeatures();
 		}
-	}
+		mapboxSetup();
+	}, []);
 
 	function mapboxSetup() {
 		// if no map initialise map
@@ -125,8 +121,7 @@ export default function App() {
 		});
 		// setup map listeners for user movement
 		map.current.on("move", () => {
-			const c = map.current.getCenter();
-			setMapCenter({ lng: c.lng, lat: c.lat });
+			setMapCenter(map.current.getCenter());
 			setZoom(map.current.getZoom());
 		});
 	}
