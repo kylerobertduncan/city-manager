@@ -595,6 +595,22 @@ export default function App() {
 		deleteFeature: deleteFeature,
 	};
 
+  const dialogFunctions: {
+		nameValue: string;
+		tagsValue: string;
+		notesValue: string;
+		nameSetter: (s:string) => void;
+		tagsSetter: (s:string) => void;
+		notesSetter: (s:string) => void;
+	} = {
+    nameValue: newFeatureName,
+    tagsValue: newFeatureTags,
+    notesValue: newFeatureNotes,
+    nameSetter: setNewFeatureName,
+    tagsSetter: setNewFeatureTags,
+    notesSetter: setNewFeatureNotes,
+  };
+
 	return (
 		<Grid container className="App">
 			{/* MapWindow */}
@@ -716,25 +732,15 @@ export default function App() {
 				</Stack>
 
 				<AddFeatureDialog
+					{...dialogFunctions}
 					isOpen={addPointDialogOpen}
-					nameValue={newFeatureName}
-					tagsValue={newFeatureTags}
-					notesValue={newFeatureNotes}
-					nameSetter={setNewFeatureName}
-					tagsSetter={setNewFeatureTags}
-					notesSetter={setNewFeatureNotes}
 					handleAddFeature={addPointFeature}
 					handleClose={closeAddPointDialog}
 				/>
 
 				<AddFeatureDialog
+					{...dialogFunctions}
 					isOpen={addPolygonDialogOpen}
-					nameValue={newFeatureName}
-					tagsValue={newFeatureTags}
-					notesValue={newFeatureNotes}
-					nameSetter={setNewFeatureName}
-					tagsSetter={setNewFeatureTags}
-					notesSetter={setNewFeatureNotes}
 					handleAddFeature={addPolygonFeature}
 					handleClose={closeAddPolygonDialog}
 				/>
