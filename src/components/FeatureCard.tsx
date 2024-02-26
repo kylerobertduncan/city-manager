@@ -51,11 +51,11 @@ export default function FeatureCard({
 				title={name ? name : "Location Name"}
 				titleTypographyProps={{ component: "h2", variant: "h5" }}
 				subheader={address ? address : "Subheader (address?) here"}
-				action={
-					<IconButton aria-label="Edit feature" disabled size="small">
-						<MoreVertIcon />
-					</IconButton>
-				}
+				// action={
+				// 	<IconButton aria-label="Options" disabled size="small">
+				// 		<MoreVertIcon />
+				// 	</IconButton>
+				// }
 			/>
 			<CardContent>
 				{/* switch tags and address? */}

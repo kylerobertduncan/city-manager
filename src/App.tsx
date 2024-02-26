@@ -109,6 +109,7 @@ export default function App() {
 		if (!map.current.getSource(mapboxSourceId)) mapboxAddCoreSource();
 		// if layer(s) not loaded, load layer(s)
 		if (!map.current.getLayer(mapboxPointLayerId)) mapboxAddCoreLayers();
+    handlePageLoad();
 	}
 
 	// extrapolate map and functions to a separate class module?
@@ -197,6 +198,12 @@ export default function App() {
 		);
 	}
 
+  function handlePageLoad() {
+    // add search for new city feature here
+    if (!geojsonData.features.length) return;
+		goToBounds(bbox(geojsonData) as mapboxgl.LngLatBoundsLike);
+	}
+
 	// update localStorage and Mapbox when data in state changes
 	useEffect(() => {
 		// prevents overwriting localStorage with empty collection on load
@@ -212,6 +219,7 @@ export default function App() {
 		}
 		// update mapbox data
 		mapboxUpdateCoreData();
+    map.current.once("load", (handlePageLoad));
 	}, [geojsonData]);
 
 	function mapboxUpdateCoreData() {
@@ -246,6 +254,10 @@ export default function App() {
 			duration: 1000,
 		});
 	}
+
+  function goToBounds(bounds:mapboxgl.LngLatBoundsLike) {
+    map.current.fitBounds(bounds, { padding: 100 })
+  }
 
 	function showFeaturePopup(properties: mapboxgl.EventData) {
 		if (!properties) return;
