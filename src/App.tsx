@@ -250,7 +250,7 @@ export default function App() {
 	function showFeaturePopup(properties: mapboxgl.EventData) {
 		if (!properties) return;
 		// close other popups? multiple can be opened from sidebar
-		const lngLat =
+    const lngLat =
 			typeof properties.center == "string"
 				? JSON.parse(properties.center)
 				: properties.center;
@@ -267,7 +267,7 @@ export default function App() {
 		const center = e.features[0].properties.center
 			? JSON.parse(e.features[0].properties.center)
 			: e.lngLat;
-		goToFeature(center);
+    goToFeature(center);
 		showFeaturePopup(e.features[0].properties);
 	}
 
@@ -320,6 +320,7 @@ export default function App() {
 			},
 			properties: {
 				...properties,
+				center: newPointCoordinates,
 				created: Date.now(),
 				id: uuid(),
 			},
