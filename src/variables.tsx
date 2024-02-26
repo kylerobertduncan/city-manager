@@ -1,7 +1,7 @@
 // export const localStorageId:string = "geojsonData";
 export const localStorageId: string = "prince"; // update to prxs?
 export const mapboxSourceId: string = "prxs-source";
-export const mapboxLayerId: string = "prxs-layer";
+export const mapboxPointLayerId: string = "prxs-point-layer";
 export const mapboxPolygonLayerId: string = "prxs-polygon-layer";
 
 // polygon draft ids
@@ -22,14 +22,26 @@ export const liveLineSource: string = "prxs-liveLine-source";
 export const liveLineLayer: string = "prxs-liveLine-layer";
 // maybe add a point layer as well?
 
-export interface pointProperties {
-	address: string | null;
-	color: string | null;
+export interface featureProperties {
+	address?: string;
+	bbox?: number[];
+	center?: number[];
+	color?: string;
 	created: number;
 	id: string;
 	name: string;
-	notes: string | null; // maybe an array in future?
-	tags: string | null; // maybe an array in future?
+	notes?: string; // maybe an array in future?
+	tags?: string; // maybe an array in future?
+}
+
+export const emptyFeatureProperties:featureProperties = {
+  address: "",
+  color: "",
+  created: 0,
+  id: "",
+  name: "",
+  notes: "",
+  tags: "",
 }
 
 export const emptyFeatureCollection: GeoJSON.FeatureCollection = {

@@ -13,20 +13,22 @@ import EditIcon from "@mui/icons-material/Edit";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 
 export default function FeatureCard({
+	deleteFeature,
+	editFeature,
 	featureData,
 	goToFeature,
 	showFeaturePopup,
-	deleteFeature,
 }: {
+	deleteFeature: (id: string) => void;
+	editFeature: (feature: GeoJSON.Feature) => void;
 	featureData: GeoJSON.Feature;
 	goToFeature: (e: GeoJSON.Position) => void;
 	showFeaturePopup: (e: mapboxgl.EventData) => void;
-	deleteFeature: (id: string) => void;
 }) {
 	if (!featureData.properties) return null;
 	// console.log(featureData);
 
-  const { address, name, notes, tags } = featureData.properties;
+	const { address, name, notes, tags } = featureData.properties;
 	return (
 		<Card raised>
 			<CardHeader
@@ -63,7 +65,11 @@ export default function FeatureCard({
 			</CardContent>
 			{/* move this to a pop out menu at top right */}
 			<CardActions>
-				<IconButton aria-label="Edit feature" disabled size="small">
+				<IconButton
+					aria-label="Edit feature"
+					onClick={() => editFeature(featureData)}
+					size="small"
+				>
 					<EditIcon />
 				</IconButton>
 				<IconButton

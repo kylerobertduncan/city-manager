@@ -12,9 +12,10 @@ export default function Sidebar({
 }: {
 	geojsonData: GeoJSON.FeatureCollection;
 	featureCardFunctions: {
+		deleteFeature: (id: string) => void;
+		editFeature: (feature: GeoJSON.Feature) => void;
 		goToFeature: (e: GeoJSON.Position) => void;
 		showFeaturePopup: (e: mapboxgl.EventData) => void;
-		deleteFeature: (id: string) => void;
 	};
 }) {
 	return (
@@ -47,12 +48,7 @@ export default function Sidebar({
 						if (!f.properties) return null;
 						return (
 							<Grid component="li" item key={f.properties.id} xs={12}>
-								<FeatureCard
-									featureData={f}
-									{...featureCardFunctions}
-									// goToFeature={goToFeature}
-									// showFeaturePopup={showFeaturePopup}
-								/>
+								<FeatureCard featureData={f} {...featureCardFunctions} />
 							</Grid>
 						);
 					})}

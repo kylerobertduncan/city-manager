@@ -1,7 +1,7 @@
 import mapboxgl from "mapbox-gl";
 import {
 	// localStorageId,
-	mapboxLayerId,
+	mapboxPointLayerId,
 	mapboxPolygonLayerId,
 	mapboxSourceId,
 	// emptyFeatureCollection,
@@ -32,6 +32,8 @@ export default class mapHandler {
 		this.setZoom = setZoom;
 	}
 
+	/* Map intialization and core data setup */
+
 	init() {
 		this.map = new mapboxgl.Map({
 			container: "map-container",
@@ -55,7 +57,7 @@ export default class mapHandler {
 	}
 
 	addCoreLayers() {
-		if (this.map!.getLayer(mapboxLayerId)) return;
+		if (this.map!.getLayer(mapboxPointLayerId)) return;
 		this.map!.addLayer(
 			{
 				filter: ["==", ["geometry-type"], "Polygon"],
@@ -73,7 +75,7 @@ export default class mapHandler {
 		this.map!.addLayer(
 			{
 				filter: ["==", ["geometry-type"], "Point"],
-				id: mapboxLayerId,
+				id: mapboxPointLayerId,
 				source: mapboxSourceId,
 				type: "circle",
 				paint: {
@@ -87,7 +89,7 @@ export default class mapHandler {
 		this.map!.addLayer(
 			{
 				filter: ["==", ["geometry-type"], "Point"],
-				id: `${mapboxLayerId}-trigger`,
+				id: `${mapboxPointLayerId}-trigger`,
 				source: mapboxSourceId,
 				type: "circle",
 				paint: {
@@ -99,19 +101,19 @@ export default class mapHandler {
 		);
 		this.map!.on(
 			"mouseenter",
-			[`${mapboxLayerId}-trigger`, mapboxPolygonLayerId],
+			[`${mapboxPointLayerId}-trigger`, mapboxPolygonLayerId],
 			() => (this.map!.getCanvas().style.cursor = "pointer")
 		);
 		this.map!.on(
 			"mouseleave",
-			[`${mapboxLayerId}-trigger`, mapboxPolygonLayerId],
+			[`${mapboxPointLayerId}-trigger`, mapboxPolygonLayerId],
 			() => (this.map!.getCanvas().style.cursor = "")
 		);
-		// this.map!.on(
-		// 	"click",
-		// 	[`${mapboxLayerId}-trigger`, mapboxPolygonLayerId],
-		// 	handleFeatureClick
-		// );
+		this.map!.on(
+			"click",
+			[`${mapboxPointLayerId}-trigger`, mapboxPolygonLayerId],
+			this.handleFeatureClick
+		);
 	}
 
 	updateCoreData(geojsonData: GeoJSON.FeatureCollection) {
@@ -144,5 +146,38 @@ export default class mapHandler {
 	mapboxSetCoreData(geojsonData: GeoJSON.FeatureCollection) {
 		const s = this.map!.getSource(mapboxSourceId) as mapboxgl.GeoJSONSource;
 		s.setData(geojsonData);
+	}
+
+	/* Utility Functions */
+
+	goToFeature(lngLat: mapboxgl.LngLatLike) {
+		this.map!.easeTo({
+			center: lngLat,
+			duration: 1000,
+		});
+	}
+
+	showFeaturePopup(properties: mapboxgl.EventData) {
+		if (!properties) return;
+		// close other popups? multiple can be opened from sidebar
+		const lngLat =
+			typeof properties.center == "string"
+				? JSON.parse(properties.center)
+				: properties.center;
+		const popup = new mapboxgl.Popup({ anchor: "left" });
+		popup
+			.setLngLat(lngLat)
+			.setHTML(`<h2 style="color:black;">${properties.name}</h2>`)
+			.setMaxWidth("300px")
+			.addTo(this.map!);
+	}
+
+	handleFeatureClick(e: mapboxgl.EventData) {
+		// handle click that captures multiple features
+		const center = e.features[0].properties.center
+			? JSON.parse(e.features[0].properties.center)
+			: e.lngLat;
+		this.goToFeature(center);
+		this.showFeaturePopup(e.features[0].properties);
 	}
 }

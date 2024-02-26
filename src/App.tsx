@@ -21,16 +21,18 @@ import RouteIcon from "@mui/icons-material/Route";
 import "./App.css";
 // import mapHandler from "./mapHandler";
 // import components
-import AddFeatureDialog from "./components/AddFeatureDialog";
+import FeatureDialog from "./components/FeatureDialog";
 import MobileSidebar from "./components/MobileSidebar";
 import Sidebar from "./components/Sidebar";
 // import other local modules
 import {
 	localStorageId,
-	mapboxLayerId,
-	mapboxPolygonLayerId,
-	mapboxSourceId,
+  featureProperties,
+  emptyFeatureProperties,
 	emptyFeatureCollection,
+	mapboxSourceId,
+	mapboxPointLayerId,
+	mapboxPolygonLayerId,
 	newPolygonSource,
 	newPolygonPointLayer,
 	newPolygonLineLayer,
@@ -57,7 +59,7 @@ export default function App() {
 	const [geojsonData, setGeojsonData] = useState<GeoJSON.FeatureCollection>(
 		emptyFeatureCollection
 	);
-  
+
 	/*
     // possible alternative to useEffect with geojsonData dependency (i.e. call instead of setGeojsonData)
     function updateGeojsonData(newData: GeoJSON.FeatureCollection) {
@@ -106,7 +108,7 @@ export default function App() {
 		// if source not loaded, load source
 		if (!map.current.getSource(mapboxSourceId)) mapboxAddCoreSource();
 		// if layer(s) not loaded, load layer(s)
-		if (!map.current.getLayer(mapboxLayerId)) mapboxAddCoreLayers();
+		if (!map.current.getLayer(mapboxPointLayerId)) mapboxAddCoreLayers();
 	}
 
 	// extrapolate map and functions to a separate class module?
@@ -136,7 +138,7 @@ export default function App() {
 	}
 
 	function mapboxAddCoreLayers() {
-		if (map.current.getLayer(mapboxLayerId)) return;
+		if (map.current.getLayer(mapboxPointLayerId)) return;
 		map.current.addLayer(
 			{
 				filter: ["==", ["geometry-type"], "Polygon"],
@@ -154,7 +156,7 @@ export default function App() {
 		map.current.addLayer(
 			{
 				filter: ["==", ["geometry-type"], "Point"],
-				id: mapboxLayerId,
+				id: mapboxPointLayerId,
 				source: mapboxSourceId,
 				type: "circle",
 				paint: {
@@ -168,7 +170,7 @@ export default function App() {
 		map.current.addLayer(
 			{
 				filter: ["==", ["geometry-type"], "Point"],
-				id: `${mapboxLayerId}-trigger`,
+				id: `${mapboxPointLayerId}-trigger`,
 				source: mapboxSourceId,
 				type: "circle",
 				paint: {
@@ -180,17 +182,17 @@ export default function App() {
 		);
 		map.current.on(
 			"mouseenter",
-			[`${mapboxLayerId}-trigger`, mapboxPolygonLayerId],
+			[`${mapboxPointLayerId}-trigger`, mapboxPolygonLayerId],
 			() => (map.current.getCanvas().style.cursor = "pointer")
 		);
 		map.current.on(
 			"mouseleave",
-			[`${mapboxLayerId}-trigger`, mapboxPolygonLayerId],
+			[`${mapboxPointLayerId}-trigger`, mapboxPolygonLayerId],
 			() => (map.current.getCanvas().style.cursor = "")
 		);
 		map.current.on(
 			"click",
-			[`${mapboxLayerId}-trigger`, mapboxPolygonLayerId],
+			[`${mapboxPointLayerId}-trigger`, mapboxPolygonLayerId],
 			handleFeatureClick
 		);
 	}
@@ -269,13 +271,19 @@ export default function App() {
 		showFeaturePopup(e.features[0].properties);
 	}
 
-	/* ADDING FEATURES */
+	/* ADDING, EDITING & DELETING FEATURES */
 
-	function resetNewFeatureProps() {
+	// setup dialog handlers
+	const [addPointDialogOpen, setAddPointDialogOpen] = useState(false);
+	const [addPolygonDialogOpen, setAddPolygonDialogOpen] = useState(false);
+	const [editFeatureDialogOpen, setEditFeatureDialogOpen] = useState(false);
+	function handleCloseDialog() {
+		setAddPointDialogOpen(false);
+		setAddPolygonDialogOpen(false);
 		setNewPointCoordinates([0, 0]);
 		setNewPolygonCoordinates([]);
 		const p = map.current.getSource(newPolygonSource);
-		if (p)
+		if (p) {
 			p.setData({
 				type: "Feature",
 				geometry: {
@@ -283,32 +291,26 @@ export default function App() {
 					coordinates: [],
 				},
 			});
-		setNewFeatureName("");
-		setNewFeatureTags("");
-		setNewFeatureNotes("");
+		}
 	}
-	// setup dialog handlers
-	const [addPointDialogOpen, setAddPointDialogOpen] = useState(false);
-	const openAddPointDialog = () => setAddPointDialogOpen(true);
-	function closeAddPointDialog() {
-		setAddPointDialogOpen(false);
-		resetNewFeatureProps();
-	}
-	const [addPolygonDialogOpen, setAddPolygonDialogOpen] = useState(false);
-	const openAddPolygonDialog = () => setAddPolygonDialogOpen(true);
-	function closeAddPolygonDialog() {
-		setAddPolygonDialogOpen(false);
-		resetNewFeatureProps();
+	const [dialogProperties, setDialogProperties] = useState<featureProperties>(
+		emptyFeatureProperties
+	);
+  function updateDialogProperties(property: string, value: string) {
+		setDialogProperties({
+			...dialogProperties,
+			[property]: value,
+		});
 	}
 
 	// setup state for new feature properties in progress
-	const [newFeatureName, setNewFeatureName] = useState<string>("");
-	const [newFeatureTags, setNewFeatureTags] = useState<string>("");
-	const [newFeatureNotes, setNewFeatureNotes] = useState<string>("");
 	const [newPointCoordinates, setNewPointCoordinates] = useState([0, 0]);
+	const [newPolygonCoordinates, setNewPolygonCoordinates] = useState<
+		number[][]
+	>([]);
 
 	// add a point feature to the map (and data)
-	function addPointFeature() {
+	function addPointFeature(properties: featureProperties) {
 		// build new feature object
 		const newPointFeature: GeoJSON.Feature = {
 			type: "Feature",
@@ -317,14 +319,9 @@ export default function App() {
 				coordinates: newPointCoordinates,
 			},
 			properties: {
-				address: "",
-				center: newPointCoordinates,
-				color: "",
+				...properties,
 				created: Date.now(),
 				id: uuid(),
-				name: newFeatureName,
-				notes: newFeatureNotes,
-				tags: newFeatureTags,
 			},
 		};
 		// rebuild data with new feature
@@ -332,20 +329,20 @@ export default function App() {
 		newData.features.push(newPointFeature);
 		// update data in state
 		setGeojsonData(newData);
-		// close the dialog modal
-		closeAddPointDialog();
+		// reset data in state
 	}
 
 	function addPointListener() {
+    setDialogProperties(emptyFeatureProperties);
 		// set cursor to a pointer
 		map.current.getCanvas().style.cursor = "pointer";
 		// listen for the users click, then:
 		map.current.once("click", (e: mapboxgl.EventData) => {
-			const f = map.current.queryRenderedFeatures(
-				[e.lngLat.lng, e.lngLat.lat], // probably need a borBox for wider capture
-				{ layers: ["poi-label"] } // expand to all label layers?
-			);
-			console.log("poi-label features", f);
+			// const f = map.current.queryRenderedFeatures(
+			// 	[e.lngLat.lng, e.lngLat.lat], // probably need a borBox for wider capture
+			// 	{ layers: ["poi-label"] } // expand to all label layers?
+			// );
+			// console.log("poi-label features", f);
 			// center map on click
 			goToFeature(e.lngLat);
 			// set coordinates in state
@@ -353,16 +350,12 @@ export default function App() {
 			// return cursor to default
 			map.current.getCanvas().style.cursor = "";
 			// open properties dialog to get properties
-			openAddPointDialog();
+			setAddPointDialogOpen(true);
 		});
 	}
 
-	const [newPolygonCoordinates, setNewPolygonCoordinates] = useState<
-		number[][]
-	>([]);
-
 	// add a polygon feature to the map (and data)
-	function addPolygonFeature() {
+	function addPolygonFeature(properties: featureProperties) {
 		const newPolygonFeature: GeoJSON.Feature = {
 			type: "Feature",
 			geometry: {
@@ -370,14 +363,9 @@ export default function App() {
 				coordinates: [newPolygonCoordinates],
 			},
 			properties: {
-				address: "",
-				center: [],
-				color: "",
+				...properties,
 				created: Date.now(),
 				id: uuid(),
-				name: newFeatureName,
-				notes: newFeatureNotes,
-				tags: newFeatureTags,
 			},
 		};
 		const center = centerOfMass(newPolygonFeature.geometry);
@@ -388,8 +376,6 @@ export default function App() {
 		newData.features.push(newPolygonFeature);
 		// update data in state
 		setGeojsonData(newData);
-		// close the dialog modal
-		closeAddPolygonDialog();
 	}
 
 	function calculateLiveLineCoordinates(cursorLngLat: number[] | null) {
@@ -530,6 +516,7 @@ export default function App() {
 	}
 
 	function addPolygonListener() {
+    setDialogProperties(emptyFeatureProperties);
 		// set cursor to a pointer
 		map.current.getCanvas().style.cursor = "pointer";
 		// start listening for the users clicks to add points
@@ -544,22 +531,40 @@ export default function App() {
 			map.current.off("click", addPolygonPointsToState);
 			map.current.off("mousemove", updateLiveLineData);
 			map.current.getCanvas().style.cursor = "";
-			openAddPolygonDialog();
+			setAddPolygonDialogOpen(true);
 			// easeTo polygon with fitBounds;
 		});
 	}
 
-	/* ADDING FEATURES */
+	// edit feature
+	function editFeature(feature: GeoJSON.Feature) {
+    setDialogProperties({ ...feature.properties } as featureProperties);
+    setEditFeatureDialogOpen(true);
+	}
 
-  function deleteFeature(uuid:string) {
-		if (!window.confirm("Are you sure you want to delete this feature?")) return;
+	function updateEditedFeature(properties: featureProperties) {
+		const updatedData = { ...geojsonData };
+    updatedData.features = geojsonData.features.map(f => {
+      if (f.properties!.id !== properties.id) return f;
+      else {
+        const updatedFeature = { ...f }
+        updatedFeature.properties = { ...properties }
+        return updatedFeature;
+      }
+    });
+    setGeojsonData(updatedData);
+	}
+
+	function deleteFeature(uuid: string) {
+		if (!window.confirm("Are you sure you want to delete this feature?"))
+			return;
 		const updatedFeatureCollection = {
 			...geojsonData,
 			features: geojsonData.features.filter(
 				(feature) => feature.properties!.id !== uuid
 			),
 		};
-    setGeojsonData(updatedFeatureCollection);
+		setGeojsonData(updatedFeatureCollection);
 	}
 
 	// erase all data
@@ -579,32 +584,18 @@ export default function App() {
 		setGeojsonData(emptyFeatureCollection);
 	}
 
-  /* prop packages */
-  const featureCardFunctions: {
+	/* prop packages */
+	const featureCardFunctions: {
+		deleteFeature: (id: string) => void;
+		editFeature: (feature: GeoJSON.Feature) => void;
 		goToFeature: (e: GeoJSON.Position) => void;
 		showFeaturePopup: (e: mapboxgl.EventData) => void;
-		deleteFeature: (id: string) => void;
 	} = {
+		deleteFeature: deleteFeature,
+		editFeature: editFeature,
 		goToFeature: goToFeature,
 		showFeaturePopup: showFeaturePopup,
-		deleteFeature: deleteFeature,
 	};
-
-  const dialogFunctions: {
-		nameValue: string;
-		tagsValue: string;
-		notesValue: string;
-		nameSetter: (s:string) => void;
-		tagsSetter: (s:string) => void;
-		notesSetter: (s:string) => void;
-	} = {
-    nameValue: newFeatureName,
-    tagsValue: newFeatureTags,
-    notesValue: newFeatureNotes,
-    nameSetter: setNewFeatureName,
-    tagsSetter: setNewFeatureTags,
-    notesSetter: setNewFeatureNotes,
-  };
 
 	return (
 		<Grid container className="App">
@@ -726,18 +717,31 @@ export default function App() {
 					</Tooltip>
 				</Stack>
 
-				<AddFeatureDialog
-					{...dialogFunctions}
+				{/* Add Point Feature Dialog */}
+				<FeatureDialog
+					closeDialog={handleCloseDialog}
+					featureProperties={dialogProperties}
 					isOpen={addPointDialogOpen}
-					handleAddFeature={addPointFeature}
-					handleClose={closeAddPointDialog}
+					returnProperties={addPointFeature}
+          updateProperties={updateDialogProperties}
 				/>
 
-				<AddFeatureDialog
-					{...dialogFunctions}
+				{/* Add Polygon Feature Dialog */}
+				<FeatureDialog
+					closeDialog={handleCloseDialog}
+					featureProperties={dialogProperties}
 					isOpen={addPolygonDialogOpen}
-					handleAddFeature={addPolygonFeature}
-					handleClose={closeAddPolygonDialog}
+					returnProperties={addPolygonFeature}
+          updateProperties={updateDialogProperties}
+				/>
+
+				{/* Edit Feature Dialog */}
+				<FeatureDialog
+					closeDialog={() => setEditFeatureDialogOpen(false)}
+					featureProperties={dialogProperties}
+					isOpen={editFeatureDialogOpen}
+					returnProperties={updateEditedFeature}
+          updateProperties={updateDialogProperties}
 				/>
 			</Grid>
 
