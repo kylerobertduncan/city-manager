@@ -39,6 +39,7 @@ import {
 	liveLineSource,
 	liveLineLayer,
 } from "./variables";
+import markerImg from "./assets/icons8-map-pin-48.png"
 
 // add url restrictions before releasing production
 // https://docs.mapbox.com/accounts/guides/tokens/#url-restrictions
@@ -153,47 +154,88 @@ export default function App() {
 			},
 			"land-structure-polygon"
 		);
-		// add layer
-		map.current.addLayer(
+    map.current.addLayer({
+				filter: ["==", ["geometry-type"], "Polygon"],
+				id: "mapboxPolygonLayerId-line",
+				source: mapboxSourceId,
+				type: "line",
+        layout: {
+          "line-cap": "round",
+          "line-join": "round"
+        },
+				paint: {
+					"line-color": "white",
+					"line-opacity": 0.5,
+          "line-width": 2.5,
+				},
+			},
+			"land-structure-polygon"
+		);
+		// map.current.addLayer(
+		// 	{
+		// 		filter: ["==", ["geometry-type"], "Point"],
+		// 		id: mapboxPointLayerId,
+		// 		source: mapboxSourceId,
+		// 		type: "circle",
+		// 		paint: {
+		// 			"circle-color": "red",
+		// 			"circle-opacity": 0.5,
+		// 			"circle-radius": 10,
+		// 			"circle-stroke-color": "white",
+		// 			"circle-stroke-opacity": 0.5,
+		// 			"circle-stroke-width": 2.5,
+		// 		},
+		// 	},
+		// 	"road-label"
+		// );
+    map.current.loadImage(markerImg, (e:mapboxgl.ErrorEvent, img:mapboxgl.ImageSource) => {
+      if (e) throw e;
+
+      map.current.addImage("marker", img, { sdf: true });
+    });
+    map.current.addLayer(
 			{
 				filter: ["==", ["geometry-type"], "Point"],
 				id: mapboxPointLayerId,
 				source: mapboxSourceId,
-				type: "circle",
-				paint: {
-					"circle-color": "red",
-					"circle-opacity": 0.75,
-					"circle-radius": 10,
+				type: "symbol",
+				layout: {
+					"icon-allow-overlap": true,
+					"icon-anchor": "bottom",
+					"icon-image": "marker",
 				},
+				paint: {
+          "icon-color": "yellow",
+        },
 			},
 			"road-label"
 		);
-		map.current.addLayer(
-			{
-				filter: ["==", ["geometry-type"], "Point"],
-				id: `${mapboxPointLayerId}-trigger`,
-				source: mapboxSourceId,
-				type: "circle",
-				paint: {
-					"circle-color": "transparent",
-					"circle-radius": 20,
-				},
-			},
-			"road-label"
-		);
+		// map.current.addLayer(
+		// 	{
+		// 		filter: ["==", ["geometry-type"], "Point"],
+		// 		id: `${mapboxPointLayerId}-trigger`,
+		// 		source: mapboxSourceId,
+		// 		type: "circle",
+		// 		paint: {
+		// 			"circle-color": "transparent",
+		// 			"circle-radius": 20,
+		// 		},
+		// 	},
+		// 	"road-label"
+		// );
 		map.current.on(
 			"mouseenter",
-			[`${mapboxPointLayerId}-trigger`, mapboxPolygonLayerId],
+			[`${mapboxPointLayerId}`, mapboxPolygonLayerId],
 			() => (map.current.getCanvas().style.cursor = "pointer")
 		);
 		map.current.on(
 			"mouseleave",
-			[`${mapboxPointLayerId}-trigger`, mapboxPolygonLayerId],
+			[`${mapboxPointLayerId}`, mapboxPolygonLayerId],
 			() => (map.current.getCanvas().style.cursor = "")
 		);
 		map.current.on(
 			"click",
-			[`${mapboxPointLayerId}-trigger`, mapboxPolygonLayerId],
+			[`${mapboxPointLayerId}`, mapboxPolygonLayerId],
 			handleFeatureClick
 		);
 	}
