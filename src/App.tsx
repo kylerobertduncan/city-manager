@@ -12,8 +12,9 @@ import Tooltip from "@mui/material/Tooltip";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { useTheme } from "@mui/material/styles";
 // import material ui icons
-import ExploreIcon from "@mui/icons-material/Explore"; // better icon for selecting?
+import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
+import ExploreIcon from "@mui/icons-material/Explore"; // better icon for selecting?
 import PlaceIcon from "@mui/icons-material/Place";
 import PolylineIcon from "@mui/icons-material/Polyline";
 import RouteIcon from "@mui/icons-material/Route";
@@ -25,7 +26,8 @@ import "./App.css";
 import FeatureDialog from "./components/FeatureDialog";
 import MobileSidebar from "./components/MobileSidebar";
 import Sidebar from "./components/Sidebar";
-import { JsonToBlobDownloader, JsonFileImporter, saveCurrentData } from "./fileManager";
+import { VisuallyHiddenInput } from "./components/VisuallyHiddenInput";
+import { LoadNewData, saveCurrentData } from "./fileManager";
 // import other local modules
 import {
 	localStorageId,
@@ -639,7 +641,12 @@ export default function App() {
 		);
 		// reset data in state with an empty feature collection
 		setGeojsonData(emptyFeatureCollection);
-	}
+  }
+  
+  function loadNewData(newGeojsonData:GeoJSON.FeatureCollection) {
+    if (!window.confirm("Loading this data will erase any existing features. Are you sure you want to continue?")) return;
+    setGeojsonData(newGeojsonData);
+  }
 
 	/* prop packages */
 	const featureCardFunctions: {
@@ -683,7 +690,8 @@ export default function App() {
 					justifyContent='center'
 					direction='row'
 					marginY='20px'
-					spacing={{ xs: 1, md: 2 }}
+					// spacing={{ xs: 1, md: 2 }}
+					spacing={1}
 					// minWidth="250px"
 					sx={{
 						bottom: {
@@ -771,11 +779,21 @@ export default function App() {
 							<SaveIcon />
 						</Button>
 					</Tooltip>
-					<JsonFileImporter
-						onImport={(data) => {
-							console.log("loaded data:", data);
-						}}
-					/>
+					<Tooltip title='Load new data'>
+						<Button
+							component='label'
+							role={undefined}
+							tabIndex={-1}
+							variant='contained'
+							sx={{
+								minWidth: "auto",
+								p: 1,
+							}}
+						>
+							<CloudUploadIcon />
+							<LoadNewData onImport={loadNewData} />
+						</Button>
+					</Tooltip>
 				</Stack>
 
 				{/* Add Point Feature Dialog */}
