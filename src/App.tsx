@@ -17,6 +17,7 @@ import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import PlaceIcon from "@mui/icons-material/Place";
 import PolylineIcon from "@mui/icons-material/Polyline";
 import RouteIcon from "@mui/icons-material/Route";
+import SaveIcon from "@mui/icons-material/Save";
 // import styles
 import "./App.css";
 // import mapHandler from "./mapHandler";
@@ -24,6 +25,7 @@ import "./App.css";
 import FeatureDialog from "./components/FeatureDialog";
 import MobileSidebar from "./components/MobileSidebar";
 import Sidebar from "./components/Sidebar";
+import { JsonToBlobDownloader, JsonFileImporter, saveCurrentData } from "./fileManager";
 // import other local modules
 import {
 	localStorageId,
@@ -653,27 +655,15 @@ export default function App() {
 	};
 
 	return (
-		<Grid container className="App">
+		<Grid container className='App'>
 			{/* MapWindow */}
-			<Grid
-				component="main"
-				item
-				xs={12}
-				md={8}
-				lg={9}
-				sx={{ position: "relative" }}
-			>
+			<Grid component='main' item xs={12} md={8} lg={9} sx={{ position: "relative" }}>
 				{/* Mapbox container */}
-				<Box
-					className="map-container"
-					component="div"
-					height="100dvh"
-					ref={mapContainer}
-				/>
+				<Box className='map-container' component='div' height='100dvh' ref={mapContainer} />
 
 				{/* lngLatZoom readout for dev only */}
 				<Box
-					className="floatingElement"
+					className='floatingElement'
 					sx={{
 						display: {
 							xs: "none",
@@ -684,16 +674,15 @@ export default function App() {
 						left: 0,
 					}}
 				>
-					Center: Lng: {mapCenter.lng.toFixed(4)} | Lat:{" "}
-					{mapCenter.lat.toFixed(4)} | Zoom: {zoom.toFixed(2)}
+					Center: Lng: {mapCenter.lng.toFixed(4)} | Lat: {mapCenter.lat.toFixed(4)} | Zoom: {zoom.toFixed(2)}
 				</Box>
 
 				{/* Toolbar */}
 				<Stack
-					alignItems="center"
-					justifyContent="center"
-					direction="row"
-					marginY="20px"
+					alignItems='center'
+					justifyContent='center'
+					direction='row'
+					marginY='20px'
 					spacing={{ xs: 1, md: 2 }}
 					// minWidth="250px"
 					sx={{
@@ -713,7 +702,7 @@ export default function App() {
 					{/* <Tooltip title="Select a feature"> */}
 					<Button
 						disabled
-						variant="contained"
+						variant='contained'
 						sx={{
 							minWidth: "auto",
 							p: 1,
@@ -722,10 +711,10 @@ export default function App() {
 						<ExploreIcon />
 					</Button>
 					{/* </Tooltip> */}
-					<Tooltip title="Add a point feature">
+					<Tooltip title='Add a point feature'>
 						<Button
 							onClick={addPointListener}
-							variant="contained"
+							variant='contained'
 							sx={{
 								minWidth: "auto",
 								p: 1,
@@ -734,10 +723,10 @@ export default function App() {
 							<PlaceIcon />
 						</Button>
 					</Tooltip>
-					<Tooltip title="Add a polygon feature">
+					<Tooltip title='Add a polygon feature'>
 						<Button
 							onClick={addPolygonListener}
-							variant="contained"
+							variant='contained'
 							sx={{
 								minWidth: "auto",
 								p: 1,
@@ -749,7 +738,7 @@ export default function App() {
 					{/* <Tooltip title="Calculate a route"> */}
 					<Button
 						disabled
-						variant="contained"
+						variant='contained'
 						sx={{
 							minWidth: "auto",
 							p: 1,
@@ -758,10 +747,10 @@ export default function App() {
 						<RouteIcon />
 					</Button>
 					{/* </Tooltip> */}
-					<Tooltip title="Delete all features">
+					<Tooltip title='Delete all features'>
 						<Button
 							onClick={deleteAllFeatures}
-							variant="contained"
+							variant='contained'
 							sx={{
 								minWidth: "auto",
 								p: 1,
@@ -770,47 +759,40 @@ export default function App() {
 							<DeleteForeverIcon />
 						</Button>
 					</Tooltip>
+					<Tooltip title='Save to disk'>
+						<Button
+							onClick={() => saveCurrentData(geojsonData)}
+							variant='contained'
+							sx={{
+								minWidth: "auto",
+								p: 1,
+							}}
+						>
+							<SaveIcon />
+						</Button>
+					</Tooltip>
+					<JsonFileImporter
+						onImport={(data) => {
+							console.log("loaded data:", data);
+						}}
+					/>
 				</Stack>
 
 				{/* Add Point Feature Dialog */}
-				<FeatureDialog
-					closeDialog={handleCloseDialog}
-					featureProperties={dialogProperties}
-					isOpen={addPointDialogOpen}
-					returnProperties={addPointFeature}
-          updateProperties={updateDialogProperties}
-				/>
+				<FeatureDialog closeDialog={handleCloseDialog} featureProperties={dialogProperties} isOpen={addPointDialogOpen} returnProperties={addPointFeature} updateProperties={updateDialogProperties} />
 
 				{/* Add Polygon Feature Dialog */}
-				<FeatureDialog
-					closeDialog={handleCloseDialog}
-					featureProperties={dialogProperties}
-					isOpen={addPolygonDialogOpen}
-					returnProperties={addPolygonFeature}
-          updateProperties={updateDialogProperties}
-				/>
+				<FeatureDialog closeDialog={handleCloseDialog} featureProperties={dialogProperties} isOpen={addPolygonDialogOpen} returnProperties={addPolygonFeature} updateProperties={updateDialogProperties} />
 
 				{/* Edit Feature Dialog */}
-				<FeatureDialog
-					closeDialog={() => setEditFeatureDialogOpen(false)}
-					featureProperties={dialogProperties}
-					isOpen={editFeatureDialogOpen}
-					returnProperties={updateEditedFeature}
-          updateProperties={updateDialogProperties}
-				/>
+				<FeatureDialog closeDialog={() => setEditFeatureDialogOpen(false)} featureProperties={dialogProperties} isOpen={editFeatureDialogOpen} returnProperties={updateEditedFeature} updateProperties={updateDialogProperties} />
 			</Grid>
 
 			{/* Sidebar */}
 			{desktop ? ( // should this be in state?
-				<Sidebar
-					geojsonData={geojsonData}
-					featureCardFunctions={featureCardFunctions}
-				/>
+				<Sidebar geojsonData={geojsonData} featureCardFunctions={featureCardFunctions} />
 			) : (
-				<MobileSidebar
-					geojsonData={geojsonData}
-					featureCardFunctions={featureCardFunctions}
-				/>
+				<MobileSidebar geojsonData={geojsonData} featureCardFunctions={featureCardFunctions} />
 			)}
 		</Grid>
 	);

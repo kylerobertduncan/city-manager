@@ -101,7 +101,7 @@ export default function MobileSidebar({
 								})}
 							</Grid>
 						</Container>
-						<Container>
+						{/* <Container>
 							<a
 								target="_blank"
 								href="https://icons8.com/icon/92345/drop-of-blood"
@@ -122,7 +122,7 @@ export default function MobileSidebar({
 							<a target="_blank" href="https://icons8.com">
 								Icons8
 							</a>
-						</Container>
+						</Container> */}
 					</Box>
 				</SwipeableDrawer>
 			</>

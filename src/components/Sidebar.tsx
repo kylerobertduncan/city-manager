@@ -54,7 +54,7 @@ export default function Sidebar({
 					})}
 				</Grid>
 			</Container>
-			<Container>
+			{/* <Container>
 				<a target="_blank" href="https://icons8.com/icon/92345/drop-of-blood">
 					Blood
 				</a>{" "}
@@ -62,7 +62,7 @@ export default function Sidebar({
 				<a target="_blank" href="https://icons8.com">
 					Icons8
 				</a>
-			</Container>
+			</Container> */}
 		</Grid>
 	);
 }
