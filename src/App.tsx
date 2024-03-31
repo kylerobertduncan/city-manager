@@ -12,9 +12,9 @@ import Tooltip from "@mui/material/Tooltip";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { useTheme } from "@mui/material/styles";
 // import material ui icons
-import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import ExploreIcon from "@mui/icons-material/Explore"; // better icon for selecting?
+import FileOpenIcon from "@mui/icons-material/FileOpen";
 import PlaceIcon from "@mui/icons-material/Place";
 import PolylineIcon from "@mui/icons-material/Polyline";
 import RouteIcon from "@mui/icons-material/Route";
@@ -26,7 +26,6 @@ import "./App.css";
 import FeatureDialog from "./components/FeatureDialog";
 import MobileSidebar from "./components/MobileSidebar";
 import Sidebar from "./components/Sidebar";
-import { VisuallyHiddenInput } from "./components/VisuallyHiddenInput";
 import { LoadNewData, saveCurrentData } from "./fileManager";
 // import other local modules
 import {
@@ -790,7 +789,7 @@ export default function App() {
 								p: 1,
 							}}
 						>
-							<CloudUploadIcon />
+							<FileOpenIcon />
 							<LoadNewData onImport={loadNewData} />
 						</Button>
 					</Tooltip>
