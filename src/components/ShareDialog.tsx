@@ -5,6 +5,7 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
+import { Link } from "react-router-dom";
 
 interface shareProperties {
 	closeDialog: () => void;
@@ -18,14 +19,14 @@ export default function ShareDialog({
   sharingID,
 }: shareProperties) {
 
-  if (sharingID) console.log(sharingID, "is in the dialog!");
+  // if (sharingID) console.log(sharingID, "is in the dialog!");
   
 	return (
 		<Dialog onClose={closeDialog} open={isOpen}>
 			<DialogTitle>Share Map</DialogTitle>
 			<DialogContent>
 				<DialogContentText>
-					You wanna map share?
+					You're sharing the map! Others can view your city <Link to={`/share/${sharingID}`}>here</Link>.
 				</DialogContentText>
 			</DialogContent>
 			<DialogActions sx={{ justifyContent: "center", paddingBottom: 2 }}>

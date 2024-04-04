@@ -3,7 +3,6 @@ import mapboxgl from "mapbox-gl";
 import { useEffect, useRef, useState } from "react";
 import { v4 as uuid } from "uuid";
 import { bbox, centerOfMass } from "@turf/turf";
-import { collection, addDoc } from "firebase/firestore"; 
 // import material ui components
 import Box from "@mui/material/Box";
 import Grid from "@mui/material/Grid";
@@ -16,7 +15,6 @@ import { useTheme } from "@mui/material/styles";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import ExploreIcon from "@mui/icons-material/Explore"; // better icon for selecting?
 import FileOpenIcon from "@mui/icons-material/FileOpen";
-import IosShareIcon from "@mui/icons-material/IosShare";
 import PlaceIcon from "@mui/icons-material/Place";
 import PolylineIcon from "@mui/icons-material/Polyline";
 import RouteIcon from "@mui/icons-material/Route";
@@ -24,10 +22,8 @@ import SaveIcon from "@mui/icons-material/Save";
 // import styles
 import "./App.css";
 // import mapHandler from "./mapHandler";
-import { db } from "./firestore";
 // import components
 import FeatureDialog from "./components/FeatureDialog";
-import ShareDialog from "./components/ShareDialog";
 import MobileSidebar from "./components/MobileSidebar";
 import Sidebar from "./components/Sidebar";
 import { LoadNewData, saveCurrentData } from "./fileManager";
@@ -46,7 +42,7 @@ import {
 	liveLineSource,
 	liveLineLayer,
 } from "./variables";
-import markerImg from "./assets/icons8-map-pin-48.png"
+// import markerImg from "./assets/icons8-map-pin-48.png"
 
 // add url restrictions before releasing production
 // https://docs.mapbox.com/accounts/guides/tokens/#url-restrictions
@@ -67,9 +63,8 @@ export default function App() {
 	const [geojsonData, setGeojsonData] = useState<GeoJSON.FeatureCollection>(
 		emptyFeatureCollection
   );
-  const [sharingID, setSharingID] = useState("");
-
-	/*
+  
+  /*
     // possible alternative to useEffect with geojsonData dependency (i.e. call instead of setGeojsonData)
     function updateGeojsonData(newData: GeoJSON.FeatureCollection) {
       if (!geojsonData.features.length) {
@@ -179,71 +174,70 @@ export default function App() {
 			},
 			"land-structure-polygon"
 		);
-		// map.current.addLayer(
-		// 	{
-		// 		filter: ["==", ["geometry-type"], "Point"],
-		// 		id: mapboxPointLayerId,
-		// 		source: mapboxSourceId,
-		// 		type: "circle",
-		// 		paint: {
-		// 			"circle-color": "red",
-		// 			"circle-opacity": 0.5,
-		// 			"circle-radius": 10,
-		// 			"circle-stroke-color": "white",
-		// 			"circle-stroke-opacity": 0.5,
-		// 			"circle-stroke-width": 2.5,
-		// 		},
-		// 	},
-		// 	"road-label"
-		// );
-    map.current.loadImage(markerImg, (e:mapboxgl.ErrorEvent, img:mapboxgl.ImageSource) => {
-      if (e) throw e;
-
-      map.current.addImage("marker", img, { sdf: true });
-    });
-    map.current.addLayer(
+		map.current.addLayer(
 			{
 				filter: ["==", ["geometry-type"], "Point"],
 				id: mapboxPointLayerId,
 				source: mapboxSourceId,
-				type: "symbol",
-				layout: {
-					"icon-allow-overlap": true,
-					"icon-anchor": "bottom",
-					"icon-image": "marker",
-				},
+				type: "circle",
 				paint: {
-          "icon-color": "yellow",
-        },
+					"circle-color": "red",
+					"circle-opacity": 0.5,
+					"circle-radius": 10,
+					"circle-stroke-color": "white",
+					"circle-stroke-opacity": 0.5,
+					"circle-stroke-width": 2.5,
+				},
 			},
 			"road-label"
 		);
-		// map.current.addLayer(
+    // map.current.loadImage(markerImg, (e:mapboxgl.ErrorEvent, img:mapboxgl.ImageSource) => {
+    //   if (e) throw e;
+    //   map.current.addImage("marker", img, { sdf: true });
+    // });
+    // map.current.addLayer(
 		// 	{
 		// 		filter: ["==", ["geometry-type"], "Point"],
-		// 		id: `${mapboxPointLayerId}-trigger`,
+		// 		id: mapboxPointLayerId,
 		// 		source: mapboxSourceId,
-		// 		type: "circle",
-		// 		paint: {
-		// 			"circle-color": "transparent",
-		// 			"circle-radius": 20,
+		// 		type: "symbol",
+		// 		layout: {
+		// 			"icon-allow-overlap": true,
+		// 			"icon-anchor": "bottom",
+		// 			"icon-image": "marker",
 		// 		},
+		// 		paint: {
+    //       "icon-color": "yellow",
+    //     },
 		// 	},
 		// 	"road-label"
 		// );
+		map.current.addLayer(
+			{
+				filter: ["==", ["geometry-type"], "Point"],
+				id: `${mapboxPointLayerId}-trigger`,
+				source: mapboxSourceId,
+				type: "circle",
+				paint: {
+					"circle-color": "transparent",
+					"circle-radius": 20,
+				},
+			},
+			"road-label"
+		);
 		map.current.on(
 			"mouseenter",
-			[`${mapboxPointLayerId}`, mapboxPolygonLayerId],
+			[`${mapboxPointLayerId}-trigger`, mapboxPolygonLayerId],
 			() => (map.current.getCanvas().style.cursor = "pointer")
 		);
 		map.current.on(
 			"mouseleave",
-			[`${mapboxPointLayerId}`, mapboxPolygonLayerId],
+			[`${mapboxPointLayerId}-trigger`, mapboxPolygonLayerId],
 			() => (map.current.getCanvas().style.cursor = "")
 		);
 		map.current.on(
 			"click",
-			[`${mapboxPointLayerId}`, mapboxPolygonLayerId],
+			[`${mapboxPointLayerId}-trigger`, mapboxPolygonLayerId],
 			handleFeatureClick
 		);
 	}
@@ -652,28 +646,6 @@ export default function App() {
     setGeojsonData(newGeojsonData);
   }
 
-  const [shareDialogOpen, setShareDialogOpen] = useState(false);
-
-  async function shareMap() {
-    if (sharingID) {
-      window.alert("You're already sharing this map!");
-      return;
-    } else {
-      try {
-        const docRef = await addDoc(collection(db, "maps"), {
-          created: Date.now(),
-          geojson: JSON.stringify(geojsonData),
-          uuid: uuid(),
-        });
-        console.log("document written with ID:", docRef.id);
-        setSharingID(docRef.id);
-        setShareDialogOpen(true);
-      } catch (e) {
-        console.error("error adding document", e);
-      }
-    }
-	}
-
 	/* prop packages */
 	const featureCardFunctions: {
 		deleteFeature: (id: string) => void;
@@ -685,7 +657,7 @@ export default function App() {
 		editFeature: editFeature,
 		goToFeature: goToFeature,
 		showFeaturePopup: showFeaturePopup,
-	};
+  };
 
 	return (
 		<Grid container className='App'>
@@ -820,18 +792,6 @@ export default function App() {
 							<LoadNewData onImport={loadNewData} />
 						</Button>
 					</Tooltip>
-					<Tooltip title='Share map'>
-						<Button
-							onClick={shareMap}
-							variant='contained'
-							sx={{
-								minWidth: "auto",
-								p: 1,
-							}}
-						>
-							<IosShareIcon />
-						</Button>
-					</Tooltip>
 				</Stack>
 
 				{/* Add Point Feature Dialog */}
@@ -843,8 +803,6 @@ export default function App() {
 				{/* Edit Feature Dialog */}
         <FeatureDialog closeDialog={() => setEditFeatureDialogOpen(false)} featureProperties={dialogProperties} isOpen={editFeatureDialogOpen} returnProperties={updateEditedFeature} updateProperties={updateDialogProperties} />
         
-        {/* Share Map Dialog */}
-        <ShareDialog closeDialog={() => setShareDialogOpen(false)} isOpen={shareDialogOpen} sharingID={sharingID}/>
 			</Grid>
 
 			{/* Sidebar */}

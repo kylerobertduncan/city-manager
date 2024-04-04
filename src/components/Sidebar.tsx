@@ -38,17 +38,19 @@ export default function Sidebar({
 			}}
 		>
 			{/* <SidebarHeader /> */}
-      <Toolbar sx={{
-        bgcolor: "grey.900",
-        display: "flex",
-        justifyContent: "space-between",
-        position: "sticky",
-        top: 0
-      }}>
+			<Toolbar
+				sx={{
+					bgcolor: "grey.900",
+					display: "flex",
+					justifyContent: "space-between",
+					position: "sticky",
+					top: 0,
+				}}
+			>
 				<Typography component='h1' variant='h5'>
 					Title
-        </Typography>
-        <SharingSwitch />
+				</Typography>
+        <SharingSwitch geojsonData={geojsonData} />
 			</Toolbar>
 			<Container sx={{ marginTop: "24px" }}>
 				<Grid component='ul' container spacing={3} paddingLeft='0' sx={{}}>
