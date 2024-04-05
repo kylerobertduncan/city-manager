@@ -42,7 +42,7 @@ import {
 	liveLineSource,
 	liveLineLayer,
 } from "./variables";
-import markerImg from "./assets/icons8-map-pin-48.png"
+// import markerImg from "./assets/icons8-map-pin-48.png"
 
 // add url restrictions before releasing production
 // https://docs.mapbox.com/accounts/guides/tokens/#url-restrictions
@@ -62,9 +62,9 @@ export default function App() {
 	// setup state for local storage geojson object
 	const [geojsonData, setGeojsonData] = useState<GeoJSON.FeatureCollection>(
 		emptyFeatureCollection
-	);
-
-	/*
+  );
+  
+  /*
     // possible alternative to useEffect with geojsonData dependency (i.e. call instead of setGeojsonData)
     function updateGeojsonData(newData: GeoJSON.FeatureCollection) {
       if (!geojsonData.features.length) {
@@ -174,71 +174,70 @@ export default function App() {
 			},
 			"land-structure-polygon"
 		);
-		// map.current.addLayer(
-		// 	{
-		// 		filter: ["==", ["geometry-type"], "Point"],
-		// 		id: mapboxPointLayerId,
-		// 		source: mapboxSourceId,
-		// 		type: "circle",
-		// 		paint: {
-		// 			"circle-color": "red",
-		// 			"circle-opacity": 0.5,
-		// 			"circle-radius": 10,
-		// 			"circle-stroke-color": "white",
-		// 			"circle-stroke-opacity": 0.5,
-		// 			"circle-stroke-width": 2.5,
-		// 		},
-		// 	},
-		// 	"road-label"
-		// );
-    map.current.loadImage(markerImg, (e:mapboxgl.ErrorEvent, img:mapboxgl.ImageSource) => {
-      if (e) throw e;
-
-      map.current.addImage("marker", img, { sdf: true });
-    });
-    map.current.addLayer(
+		map.current.addLayer(
 			{
 				filter: ["==", ["geometry-type"], "Point"],
 				id: mapboxPointLayerId,
 				source: mapboxSourceId,
-				type: "symbol",
-				layout: {
-					"icon-allow-overlap": true,
-					"icon-anchor": "bottom",
-					"icon-image": "marker",
-				},
+				type: "circle",
 				paint: {
-          "icon-color": "yellow",
-        },
+					"circle-color": "red",
+					"circle-opacity": 0.5,
+					"circle-radius": 10,
+					"circle-stroke-color": "white",
+					"circle-stroke-opacity": 0.5,
+					"circle-stroke-width": 2.5,
+				},
 			},
 			"road-label"
 		);
-		// map.current.addLayer(
+    // map.current.loadImage(markerImg, (e:mapboxgl.ErrorEvent, img:mapboxgl.ImageSource) => {
+    //   if (e) throw e;
+    //   map.current.addImage("marker", img, { sdf: true });
+    // });
+    // map.current.addLayer(
 		// 	{
 		// 		filter: ["==", ["geometry-type"], "Point"],
-		// 		id: `${mapboxPointLayerId}-trigger`,
+		// 		id: mapboxPointLayerId,
 		// 		source: mapboxSourceId,
-		// 		type: "circle",
-		// 		paint: {
-		// 			"circle-color": "transparent",
-		// 			"circle-radius": 20,
+		// 		type: "symbol",
+		// 		layout: {
+		// 			"icon-allow-overlap": true,
+		// 			"icon-anchor": "bottom",
+		// 			"icon-image": "marker",
 		// 		},
+		// 		paint: {
+    //       "icon-color": "yellow",
+    //     },
 		// 	},
 		// 	"road-label"
 		// );
+		map.current.addLayer(
+			{
+				filter: ["==", ["geometry-type"], "Point"],
+				id: `${mapboxPointLayerId}-trigger`,
+				source: mapboxSourceId,
+				type: "circle",
+				paint: {
+					"circle-color": "transparent",
+					"circle-radius": 20,
+				},
+			},
+			"road-label"
+		);
 		map.current.on(
 			"mouseenter",
-			[`${mapboxPointLayerId}`, mapboxPolygonLayerId],
+			[`${mapboxPointLayerId}-trigger`, mapboxPolygonLayerId],
 			() => (map.current.getCanvas().style.cursor = "pointer")
 		);
 		map.current.on(
 			"mouseleave",
-			[`${mapboxPointLayerId}`, mapboxPolygonLayerId],
+			[`${mapboxPointLayerId}-trigger`, mapboxPolygonLayerId],
 			() => (map.current.getCanvas().style.cursor = "")
 		);
 		map.current.on(
 			"click",
-			[`${mapboxPointLayerId}`, mapboxPolygonLayerId],
+			[`${mapboxPointLayerId}-trigger`, mapboxPolygonLayerId],
 			handleFeatureClick
 		);
 	}
@@ -644,6 +643,7 @@ export default function App() {
   
   function loadNewData(newGeojsonData:GeoJSON.FeatureCollection) {
     if (!window.confirm("Loading this data will erase any existing features. Are you sure you want to continue?")) return;
+    // find all popups and remove them!
     setGeojsonData(newGeojsonData);
   }
 
@@ -658,7 +658,7 @@ export default function App() {
 		editFeature: editFeature,
 		goToFeature: goToFeature,
 		showFeaturePopup: showFeaturePopup,
-	};
+  };
 
 	return (
 		<Grid container className='App'>
@@ -802,7 +802,8 @@ export default function App() {
 				<FeatureDialog closeDialog={handleCloseDialog} featureProperties={dialogProperties} isOpen={addPolygonDialogOpen} returnProperties={addPolygonFeature} updateProperties={updateDialogProperties} />
 
 				{/* Edit Feature Dialog */}
-				<FeatureDialog closeDialog={() => setEditFeatureDialogOpen(false)} featureProperties={dialogProperties} isOpen={editFeatureDialogOpen} returnProperties={updateEditedFeature} updateProperties={updateDialogProperties} />
+        <FeatureDialog closeDialog={() => setEditFeatureDialogOpen(false)} featureProperties={dialogProperties} isOpen={editFeatureDialogOpen} returnProperties={updateEditedFeature} updateProperties={updateDialogProperties} />
+        
 			</Grid>
 
 			{/* Sidebar */}

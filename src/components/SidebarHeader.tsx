@@ -71,7 +71,7 @@ export default function SidebarHeader() {
 						// sx={{ flexGrow: 1, display: { xs: "none", sm: "block" } }}
 					>
 						The Second Tradition
-					</Typography>
+          </Typography>
 					{/* <Search>
 						<SearchIconWrapper>
 							<SearchIcon />

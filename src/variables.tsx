@@ -34,6 +34,12 @@ export interface featureProperties {
 	tags?: string; // maybe an array in future?
 }
 
+export interface firebaseData {
+  created: number,
+  geojson: string,
+  uuid: string,
+}
+
 export const emptyFeatureProperties:featureProperties = {
   address: "",
   color: "",
