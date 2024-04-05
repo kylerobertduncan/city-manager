@@ -643,6 +643,7 @@ export default function App() {
   
   function loadNewData(newGeojsonData:GeoJSON.FeatureCollection) {
     if (!window.confirm("Loading this data will erase any existing features. Are you sure you want to continue?")) return;
+    // find all popups and remove them!
     setGeojsonData(newGeojsonData);
   }
 
