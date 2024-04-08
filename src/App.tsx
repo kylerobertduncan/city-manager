@@ -43,6 +43,7 @@ import {
 	liveLineLayer,
 } from "./variables";
 // import markerImg from "./assets/icons8-map-pin-48.png"
+import { init, addSource, addLayers, handleCursor, } from "./map/functions";
 
 // add url restrictions before releasing production
 // https://docs.mapbox.com/accounts/guides/tokens/#url-restrictions
@@ -56,8 +57,8 @@ export default function App() {
 	// setup map object and container
 	const map: any = useRef(null);
 	const mapContainer: any = useRef(null);
-	// setup state for changable map properties
-	const [mapCenter, setMapCenter] = useState({ lng: -79.37, lat: 43.65 });
+  // setup state for changable map properties
+	const [mapCenter, setMapCenter] = useState<mapboxgl.LngLatLike>({ lng: -79.37, lat: 43.65 });
 	const [zoom, setZoom] = useState(12);
 	// setup state for local storage geojson object
 	const [geojsonData, setGeojsonData] = useState<GeoJSON.FeatureCollection>(
@@ -100,8 +101,22 @@ export default function App() {
 			console.error("Error loading data from localStorage:", error.message);
 			deleteAllFeatures();
 		}
-		mapboxSetup();
-	}, []);
+    mapboxSetup();
+    // mapbox();
+  }, []);
+  
+  function mapbox() {
+		// if no map initialise map
+		if (!map.current) map.current = init(mapCenter, mapContainer.current, setMapCenter, setZoom, zoom);
+    // if map not loaded, re-run when loaded
+    if (!map.current.loaded()) map.current.on("load", mapbox);
+    if (!map.current.isStyleLoaded()) return; // ??
+    // if source not loaded, load source
+    if (!map.current.getSource(mapboxSourceId)) addSource(geojsonData, map.current);
+    // if layer(s) not loaded, load layer(s)
+    if (!map.current.getLayer(mapboxPointLayerId)) addLayers(map.current);
+		// handlePageLoad();
+	}
 
 	function mapboxSetup() {
 		// if no map initialise map
@@ -114,7 +129,7 @@ export default function App() {
 		// if layer(s) not loaded, load layer(s)
 		if (!map.current.getLayer(mapboxPointLayerId)) mapboxAddCoreLayers();
     handlePageLoad();
-	}
+  }
 
 	// extrapolate map and functions to a separate class module?
 	function mapboxInit() {
@@ -262,30 +277,30 @@ export default function App() {
 			console.error("Error updating localStorage:", error.message);
 		}
 		// update mapbox data
-		mapboxUpdateCoreData();
+		mapboxUpdateCoreSource();
     map.current.once("load", (handlePageLoad));
 	}, [geojsonData]);
 
-	function mapboxUpdateCoreData() {
+	function mapboxUpdateCoreSource() {
 		// mapbox update triggered
 		if (
 			map.current.getSource(mapboxSourceId) &&
 			map.current.isSourceLoaded(mapboxSourceId)
 		)
-			mapboxSetCoreData();
+			mapboxSetCoreSource();
 		// Fired when one of the map's sources loads or changes
-		else map.current.on("sourcedata", handleCoreSourceData);
+		else map.current.on("sourcedata", handleSetCoreSource);
 	}
 
 	// listens for our mapbox source to load then updates data
-	function handleCoreSourceData(e: mapboxgl.EventData) {
+	function handleSetCoreSource(e: mapboxgl.EventData) {
 		if (e.sourceId === mapboxSourceId && e.isSourceLoaded) {
-			map.current.off("sourcedata", handleCoreSourceData);
-			mapboxSetCoreData();
+			map.current.off("sourcedata", handleSetCoreSource);
+			mapboxSetCoreSource();
 		}
 	}
 
-	function mapboxSetCoreData() {
+	function mapboxSetCoreSource() {
 		const s = map.current.getSource(mapboxSourceId);
 		s.setData(geojsonData);
 	}
@@ -668,7 +683,7 @@ export default function App() {
 				<Box className='map-container' component='div' height='100dvh' ref={mapContainer} />
 
 				{/* lngLatZoom readout for dev only */}
-				<Box
+				{/* <Box
 					className='floatingElement'
 					sx={{
 						display: {
@@ -681,7 +696,7 @@ export default function App() {
 					}}
 				>
 					Center: Lng: {mapCenter.lng.toFixed(4)} | Lat: {mapCenter.lat.toFixed(4)} | Zoom: {zoom.toFixed(2)}
-				</Box>
+				</Box> */}
 
 				{/* Toolbar */}
 				<Stack
