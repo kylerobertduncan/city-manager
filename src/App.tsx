@@ -43,7 +43,7 @@ import {
 	liveLineLayer,
 } from "./variables";
 // import markerImg from "./assets/icons8-map-pin-48.png"
-import { init, addSource, addLayers, handleCursor, } from "./map/functions";
+import { mapboxInit, MapController } from "./modules/mapController";
 
 // add url restrictions before releasing production
 // https://docs.mapbox.com/accounts/guides/tokens/#url-restrictions
@@ -55,7 +55,7 @@ export default function App() {
 	// should this be in state?
 	const desktop = useMediaQuery(theme.breakpoints.up("md"));
 	// setup map object and container
-	const map: any = useRef(null);
+	const mapbox: any = useRef(null);
 	const mapContainer: any = useRef(null);
   // setup state for changable map properties
 	const [mapCenter, setMapCenter] = useState<mapboxgl.LngLatLike>({ lng: -79.37, lat: 43.65 });
@@ -101,65 +101,51 @@ export default function App() {
 			console.error("Error loading data from localStorage:", error.message);
 			deleteAllFeatures();
 		}
-    mapboxSetup();
-    // mapbox();
-  }, []);
+		mapboxSetup();
+	}, []);
   
-  function mapbox() {
-		// if no map initialise map
-		if (!map.current) map.current = init(mapCenter, mapContainer.current, setMapCenter, setZoom, zoom);
-    // if map not loaded, re-run when loaded
-    if (!map.current.loaded()) map.current.on("load", mapbox);
-    if (!map.current.isStyleLoaded()) return; // ??
-    // if source not loaded, load source
-    if (!map.current.getSource(mapboxSourceId)) addSource(geojsonData, map.current);
-    // if layer(s) not loaded, load layer(s)
-    if (!map.current.getLayer(mapboxPointLayerId)) addLayers(map.current);
-		// handlePageLoad();
-	}
-
 	function mapboxSetup() {
 		// if no map initialise map
-		if (!map.current) mapboxInit();
+		if (!mapbox.current) mapboxInit();
 		// if map not loaded, re-run when loaded
-		if (!map.current.loaded()) map.current.on("load", mapboxSetup);
-		if (!map.current.isStyleLoaded()) return;
+		if (!mapbox.current.loaded()) mapbox.current.on("load", mapboxSetup);
+		if (!mapbox.current.isStyleLoaded()) return;
 		// if source not loaded, load source
-		if (!map.current.getSource(mapboxSourceId)) mapboxAddCoreSource();
+		if (!mapbox.current.getSource(mapboxSourceId)) mapboxAddCoreSource();
 		// if layer(s) not loaded, load layer(s)
-		if (!map.current.getLayer(mapboxPointLayerId)) mapboxAddCoreLayers();
+		if (!mapbox.current.getLayer(mapboxPointLayerId)) mapboxAddCoreLayers();
     handlePageLoad();
   }
 
 	// extrapolate map and functions to a separate class module?
 	function mapboxInit() {
-		if (map.current) return;
+		if (mapbox.current) return;
 		// initialize new map
-		map.current = new mapboxgl.Map({
+		mapbox.current = new mapboxgl.Map({
 			container: mapContainer.current,
 			style: "mapbox://styles/mapbox/dark-v10",
 			center: mapCenter,
 			zoom: zoom,
 		});
 		// setup map listeners for user movement
-		map.current.on("move", () => {
-			setMapCenter(map.current.getCenter());
-			setZoom(map.current.getZoom());
+		mapbox.current.on("move", () => {
+			setMapCenter(mapbox.current.getCenter());
+			setZoom(mapbox.current.getZoom());
 		});
 	}
 
 	function mapboxAddCoreSource() {
-		if (map.current.getSource(mapboxSourceId)) return;
+		if (mapbox.current.getSource(mapboxSourceId)) return;
 		// add source
-		map.current.addSource(mapboxSourceId, {
+		mapbox.current.addSource(mapboxSourceId, {
 			type: "geojson",
 			data: geojsonData,
 		});
 	}
 
 	function mapboxAddCoreLayers() {
-		if (map.current.getLayer(mapboxPointLayerId)) return;
-		map.current.addLayer(
+		if (mapbox.current.getLayer(mapboxPointLayerId)) return;
+		mapbox.current.addLayer(
 			{
 				filter: ["==", ["geometry-type"], "Polygon"],
 				id: mapboxPolygonLayerId,
@@ -172,7 +158,7 @@ export default function App() {
 			},
 			"land-structure-polygon"
 		);
-    map.current.addLayer({
+    mapbox.current.addLayer({
 				filter: ["==", ["geometry-type"], "Polygon"],
 				id: "mapboxPolygonLayerId-line",
 				source: mapboxSourceId,
@@ -189,7 +175,7 @@ export default function App() {
 			},
 			"land-structure-polygon"
 		);
-		map.current.addLayer(
+		mapbox.current.addLayer(
 			{
 				filter: ["==", ["geometry-type"], "Point"],
 				id: mapboxPointLayerId,
@@ -227,7 +213,7 @@ export default function App() {
 		// 	},
 		// 	"road-label"
 		// );
-		map.current.addLayer(
+		mapbox.current.addLayer(
 			{
 				filter: ["==", ["geometry-type"], "Point"],
 				id: `${mapboxPointLayerId}-trigger`,
@@ -240,17 +226,17 @@ export default function App() {
 			},
 			"road-label"
 		);
-		map.current.on(
+		mapbox.current.on(
 			"mouseenter",
 			[`${mapboxPointLayerId}-trigger`, mapboxPolygonLayerId],
-			() => (map.current.getCanvas().style.cursor = "pointer")
+			() => (mapbox.current.getCanvas().style.cursor = "pointer")
 		);
-		map.current.on(
+		mapbox.current.on(
 			"mouseleave",
 			[`${mapboxPointLayerId}-trigger`, mapboxPolygonLayerId],
-			() => (map.current.getCanvas().style.cursor = "")
+			() => (mapbox.current.getCanvas().style.cursor = "")
 		);
-		map.current.on(
+		mapbox.current.on(
 			"click",
 			[`${mapboxPointLayerId}-trigger`, mapboxPolygonLayerId],
 			handleFeatureClick
@@ -266,7 +252,7 @@ export default function App() {
 	// update localStorage and Mapbox when data in state changes
 	useEffect(() => {
 		// prevents overwriting localStorage with empty collection on load
-		if (!geojsonData.features.length && !map.current.getSource(mapboxSourceId))
+		if (!geojsonData.features.length && !mapbox.current.getSource(mapboxSourceId))
 			return;
 		// convert current data to a string and update localStorage
 		try {
@@ -278,44 +264,44 @@ export default function App() {
 		}
 		// update mapbox data
 		mapboxUpdateCoreSource();
-    map.current.once("load", (handlePageLoad));
+    mapbox.current.once("load", (handlePageLoad));
 	}, [geojsonData]);
 
 	function mapboxUpdateCoreSource() {
 		// mapbox update triggered
 		if (
-			map.current.getSource(mapboxSourceId) &&
-			map.current.isSourceLoaded(mapboxSourceId)
+			mapbox.current.getSource(mapboxSourceId) &&
+			mapbox.current.isSourceLoaded(mapboxSourceId)
 		)
 			mapboxSetCoreSource();
 		// Fired when one of the map's sources loads or changes
-		else map.current.on("sourcedata", handleSetCoreSource);
+		else mapbox.current.on("sourcedata", handleSetCoreSource);
 	}
 
 	// listens for our mapbox source to load then updates data
 	function handleSetCoreSource(e: mapboxgl.EventData) {
 		if (e.sourceId === mapboxSourceId && e.isSourceLoaded) {
-			map.current.off("sourcedata", handleSetCoreSource);
+			mapbox.current.off("sourcedata", handleSetCoreSource);
 			mapboxSetCoreSource();
 		}
 	}
 
 	function mapboxSetCoreSource() {
-		const s = map.current.getSource(mapboxSourceId);
+		const s = mapbox.current.getSource(mapboxSourceId);
 		s.setData(geojsonData);
 	}
 
 	/* MAPBOX UTILITY FUNCTIONS IN RESPONSE TO USER INTERACTIONS */
 
 	function goToFeature(lngLat: GeoJSON.Position) {
-		map.current.easeTo({
+		mapbox.current.easeTo({
 			center: lngLat,
 			duration: 1000,
 		});
 	}
 
   function goToBounds(bounds:mapboxgl.LngLatBoundsLike) {
-    map.current.fitBounds(bounds, { padding: 100 })
+    mapbox.current.fitBounds(bounds, { padding: 100 })
   }
 
 	function showFeaturePopup(properties: mapboxgl.EventData) {
@@ -330,7 +316,7 @@ export default function App() {
 			.setLngLat(lngLat)
 			.setHTML(`<h2 style="color:black;">${properties.name}</h2>`)
 			.setMaxWidth("300px")
-			.addTo(map.current);
+			.addTo(mapbox.current);
 	}
 
 	function handleFeatureClick(e: mapboxgl.EventData) {
@@ -353,7 +339,7 @@ export default function App() {
 		setAddPolygonDialogOpen(false);
 		setNewPointCoordinates([0, 0]);
 		setNewPolygonCoordinates([]);
-		const p = map.current.getSource(newPolygonSource);
+		const p = mapbox.current.getSource(newPolygonSource);
 		if (p) {
 			p.setData({
 				type: "Feature",
@@ -407,9 +393,9 @@ export default function App() {
 	function addPointListener() {
     setDialogProperties(emptyFeatureProperties);
 		// set cursor to a pointer
-		map.current.getCanvas().style.cursor = "pointer";
+		mapbox.current.getCanvas().style.cursor = "pointer";
 		// listen for the users click, then:
-		map.current.once("click", (e: mapboxgl.EventData) => {
+		mapbox.current.once("click", (e: mapboxgl.EventData) => {
 			// const f = map.current.queryRenderedFeatures(
 			// 	[e.lngLat.lng, e.lngLat.lat], // probably need a borBox for wider capture
 			// 	{ layers: ["poi-label"] } // expand to all label layers?
@@ -420,7 +406,7 @@ export default function App() {
 			// set coordinates in state
 			setNewPointCoordinates([e.lngLat.lng, e.lngLat.lat]);
 			// return cursor to default
-			map.current.getCanvas().style.cursor = "";
+			mapbox.current.getCanvas().style.cursor = "";
 			// open properties dialog to get properties
 			setAddPointDialogOpen(true);
 		});
@@ -462,7 +448,7 @@ export default function App() {
 
 	function updateLiveLineData(e: mapboxgl.EventData) {
 		if (!newPolygonCoordinates.length) return;
-		const src = map.current.getSource(liveLineSource);
+		const src = mapbox.current.getSource(liveLineSource);
 		if (!src) return;
 		else {
 			src.setData({
@@ -487,15 +473,15 @@ export default function App() {
 			},
 		};
 		// add live/pending lines of new polygon
-		const l = map.current.getSource(liveLineSource);
+		const l = mapbox.current.getSource(liveLineSource);
 		if (!l) {
-			map.current.addSource(liveLineSource, {
+			mapbox.current.addSource(liveLineSource, {
 				type: "geojson",
 				data: data,
 			});
 		} else l.setData(data);
-		if (!map.current.getLayer(liveLineLayer)) {
-			map.current.addLayer({
+		if (!mapbox.current.getLayer(liveLineLayer)) {
+			mapbox.current.addLayer({
 				id: liveLineLayer,
 				source: liveLineSource,
 				type: "line",
@@ -505,13 +491,13 @@ export default function App() {
 			});
 		}
 		// start listening for mouse movement to update live lines
-		map.current.on("mousemove", updateLiveLineData);
+		mapbox.current.on("mousemove", updateLiveLineData);
 		// stop previous listener for mouse movement to update live lines
-		map.current.once("click", () => {
-			map.current.off("mousemove", updateLiveLineData);
+		mapbox.current.once("click", () => {
+			mapbox.current.off("mousemove", updateLiveLineData);
 		});
-		map.current.once("dblclick", () => {
-			map.current.off("mousemove", updateLiveLineData);
+		mapbox.current.once("dblclick", () => {
+			mapbox.current.off("mousemove", updateLiveLineData);
 		});
 	}
 
@@ -536,15 +522,15 @@ export default function App() {
 			],
 		};
 		// add fixed draft of new polygon
-		const p = map.current.getSource(newPolygonSource);
+		const p = mapbox.current.getSource(newPolygonSource);
 		if (!p) {
-			map.current.addSource(newPolygonSource, {
+			mapbox.current.addSource(newPolygonSource, {
 				type: "geojson",
 				data: data,
 			});
 		} else p.setData(data);
-		if (!map.current.getLayer(newPolygonLineLayer)) {
-			map.current.addLayer({
+		if (!mapbox.current.getLayer(newPolygonLineLayer)) {
+			mapbox.current.addLayer({
 				id: newPolygonLineLayer,
 				source: newPolygonSource,
 				type: "line",
@@ -553,8 +539,8 @@ export default function App() {
 				},
 			});
 		}
-		if (!map.current.getLayer(newPolygonPointLayer)) {
-			map.current.addLayer({
+		if (!mapbox.current.getLayer(newPolygonPointLayer)) {
+			mapbox.current.addLayer({
 				id: newPolygonPointLayer,
 				source: newPolygonSource,
 				type: "circle",
@@ -590,19 +576,19 @@ export default function App() {
 	function addPolygonListener() {
     setDialogProperties(emptyFeatureProperties);
 		// set cursor to a pointer
-		map.current.getCanvas().style.cursor = "pointer";
+		mapbox.current.getCanvas().style.cursor = "pointer";
 		// start listening for the users clicks to add points
-		map.current.on("click", addPolygonPointsToState);
+		mapbox.current.on("click", addPolygonPointsToState);
 		// start listening for a user double click to add feature
-		map.current.once("dblclick", (e: mapboxgl.EventData) => {
+		mapbox.current.once("dblclick", (e: mapboxgl.EventData) => {
 			e.preventDefault();
 			setNewPolygonCoordinates((currentState) => [
 				...currentState,
 				currentState[0],
 			]);
-			map.current.off("click", addPolygonPointsToState);
-			map.current.off("mousemove", updateLiveLineData);
-			map.current.getCanvas().style.cursor = "";
+			mapbox.current.off("click", addPolygonPointsToState);
+			mapbox.current.off("mousemove", updateLiveLineData);
+			mapbox.current.getCanvas().style.cursor = "";
 			setAddPolygonDialogOpen(true);
 			// easeTo polygon with fitBounds;
 		});
@@ -644,7 +630,7 @@ export default function App() {
 		if (!window.confirm("Are you sure you want to delete ALL features?"))
 			return;
 		// update mapbox data with an empty feature collection
-		const s = map.current.getSource(mapboxSourceId);
+		const s = mapbox.current.getSource(mapboxSourceId);
 		if (!s) return;
 		s.setData(emptyFeatureCollection);
 		// replace localStorage item with an empty feature collection
@@ -680,7 +666,8 @@ export default function App() {
 			{/* MapWindow */}
 			<Grid component='main' item xs={12} md={8} lg={9} sx={{ position: "relative" }}>
 				{/* Mapbox container */}
-				<Box className='map-container' component='div' height='100dvh' ref={mapContainer} />
+        <Box className='map-container' component='div' height='100dvh' ref={mapContainer} />
+        {/* <Map map={map.current} /> */}
 
 				{/* lngLatZoom readout for dev only */}
 				{/* <Box

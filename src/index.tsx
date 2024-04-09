@@ -6,6 +6,7 @@ import { ThemeProvider } from "@mui/material/styles";
 import theme from "./theme";
 import App from "./App";
 import ErrorPage from "./routes/Error";
+import Root from "./routes/Root";
 import SharedMap, { shareLoader } from "./routes/SharedMap";
 import reportWebVitals from "./reportWebVitals";
 
@@ -13,14 +14,19 @@ const router = createBrowserRouter([
 	{
 		path: "/",
 		element: <App />,
-    errorElement: <ErrorPage />,
+		errorElement: <ErrorPage />,
 	},
-  {
-    path: "/share/:sharingID",
-    element: <SharedMap />,
-    errorElement: <ErrorPage />,
-    loader: shareLoader,
-  },
+	{
+		path: "/root",
+		element: <Root />,
+		errorElement: <ErrorPage />,
+	},
+	{
+		path: "/share/:sharingID",
+		element: <SharedMap />,
+		errorElement: <ErrorPage />,
+		loader: shareLoader,
+	},
 ]);
 
 const root = ReactDOM.createRoot(
