@@ -1,79 +1,85 @@
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import MapIcon from "@mui/icons-material/Map";
 import Container from "@mui/material/Container";
 import Grid from "@mui/material/Grid";
-import Typography from "@mui/material/Typography";
+import SwipeableDrawer from "@mui/material/SwipeableDrawer";
 import Toolbar from "@mui/material/Toolbar";
-
+import Tooltip from "@mui/material/Tooltip";
+import Typography from "@mui/material/Typography";
+import ViewListIcon from "@mui/icons-material/ViewList";
+import useMediaQuery from "@mui/material/useMediaQuery";
+import { useTheme } from "@mui/material/styles";
+import { useState } from "react";
+// local components
+import FeatureCard from "./NewFeatureCard";
 // import SidebarHeader from "./SidebarHeader";
+// loa=cal modules
+import { MapController } from "../modules/mapController";
 
-import SharingSwitch from "./SharingSwitch";
-import FeatureCard from "./FeatureCard";
+export default function Sidebar({ geojsonData, map }: { geojsonData: GeoJSON.FeatureCollection; map: MapController }) {
+	// establish screen size
+	const theme = useTheme();
+	// should this be in state?
+  const desktop = useMediaQuery(theme.breakpoints.up("md"));
 
-export default function Sidebar({
-	geojsonData,
-	featureCardFunctions,
-}: {
-	geojsonData: GeoJSON.FeatureCollection;
-	featureCardFunctions: {
-		deleteFeature: (id: string) => void;
-		editFeature: (feature: GeoJSON.Feature) => void;
-		goToFeature: (e: GeoJSON.Position) => void;
-		showFeaturePopup: (e: mapboxgl.EventData) => void;
-	};
-}) {
-	return (
-		<Grid
-			component='aside'
-			item
-			maxHeight='100vh'
-			position='relative'
-			xs={12}
-			md={4}
-			lg={3}
-			sx={{
-				overflowY: "scroll",
-				display: {
-					xs: "none",
-					md: "block",
-				},
-			}}
-		>
-			{/* <SidebarHeader /> */}
-			<Toolbar
+  if (desktop) {
+		return (
+			// desktop sidebar
+			<Grid
+				component='aside'
+				item
+				maxHeight='100vh'
+				position='relative'
+				xs={12}
+				md={4}
+				lg={3}
 				sx={{
-					bgcolor: "grey.900",
-					display: "flex",
-					justifyContent: "space-between",
-					position: "sticky",
-					top: 0,
+					overflowY: "scroll",
+					display: {
+						xs: "none",
+						md: "block",
+					},
 				}}
 			>
-				<Typography component='h1' variant='h5'>
-					Title
-				</Typography>
-        <SharingSwitch geojsonData={geojsonData} />
-			</Toolbar>
-			<Container sx={{ marginTop: "24px" }}>
-				<Grid component='ul' container spacing={3} paddingLeft='0' sx={{}}>
-					{geojsonData.features.map((f: GeoJSON.Feature, i) => {
-						// console.log(f.properties);
-						if (!f.properties) return null;
-						return (
-							<Grid component='li' item key={f.properties.id} xs={12}>
-								<FeatureCard featureData={f} {...featureCardFunctions} />
-							</Grid>
-						);
-					})}
-				</Grid>
-			</Container>
-			{/* <Container>
-				<a target="_blank" href="https://icons8.com/icon/92345/drop-of-blood">
-					Blood
-				</a>{" "}
-				icon by{" "}
-				<a target="_blank" href="https://icons8.com">
-					Icons8
-				</a>
-			</Container> */}
-		</Grid>
-	);
+				{/* <SidebarHeader /> */}
+				<Toolbar
+					sx={{
+						bgcolor: "grey.900",
+						display: "flex",
+						justifyContent: "space-between",
+						position: "sticky",
+						top: 0,
+					}}
+				>
+					<Typography component='h1' variant='h5'>
+						Title
+					</Typography>
+					{/* <SharingSwitch geojsonData={geojsonData} /> */}
+				</Toolbar>
+        {/* feature cards */}
+        <Container sx={{ marginTop: "24px" }}>
+          <Grid component='ul' container spacing={3} paddingLeft='0' sx={{}}>
+            {geojsonData.features.map((f: GeoJSON.Feature) => {
+              if (!f.properties) return null;
+              return (
+                <Grid component='li' item key={f.properties.id} xs={12}>
+                  <FeatureCard feature={f} map={map} />
+                </Grid>
+              );
+            })}
+          </Grid>
+        </Container>
+			</Grid>
+		);
+  } else {
+    const [drawerOpen, setDrawerOpen] = useState(false);
+		const openDrawer = () => setDrawerOpen(true);
+		const closeDrawer = () => setDrawerOpen(false);
+    return (
+      // mobile sidebar
+      <></>
+    );
+  }
+    
 }

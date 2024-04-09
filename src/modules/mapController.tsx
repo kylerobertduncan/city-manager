@@ -39,37 +39,37 @@ export class MapController {
 
 	// adds the initial source
 	setupSource(geojsonData: GeoJSON.FeatureCollection) {
-    if (!this.map.getSource(mapboxSourceId)) {
+		if (!this.map.getSource(mapboxSourceId)) {
 			this.map.addSource(mapboxSourceId, {
 				data: geojsonData,
 				type: "geojson",
 			});
-      this.addLayers();
-    }
+			this.addLayers();
+		}
 	}
 
-  // confirms that the source has been created and is loaded
+	// confirms that the source has been created and is loaded
 	isSourceLoaded() {
 		if (this.map.getSource(mapboxSourceId) && this.map.isSourceLoaded(mapboxSourceId)) return true;
 		else return false;
 	}
 
-  // updates the data for the source
+	// updates the data for the source
 	setSourceData(geojsonData: GeoJSON.FeatureCollection) {
 		const s = this.map.getSource(mapboxSourceId) as mapboxgl.GeoJSONSource;
 		s.setData(geojsonData);
-  }
-  
-  // checks the source is loaded before updating data
+	}
+
+	// checks the source is loaded before updating data
 	updateSource(geojsonData: GeoJSON.FeatureCollection) {
-    const checkSourceUpdates = (e: mapboxgl.EventData) => {
-      if (e.sourceId === mapboxSourceId && e.isSourceLoaded) {
-        this.map.off("sourcedata", checkSourceUpdates);
-        this.setSourceData(geojsonData);
-      }
-    }
-    if (this.isSourceLoaded()) this.setSourceData(geojsonData);
-    else this.map.on("sourcedata", checkSourceUpdates);
+		const checkSourceUpdates = (e: mapboxgl.EventData) => {
+			if (e.sourceId === mapboxSourceId && e.isSourceLoaded) {
+				this.map.off("sourcedata", checkSourceUpdates);
+				this.setSourceData(geojsonData);
+			}
+		};
+		if (this.isSourceLoaded()) this.setSourceData(geojsonData);
+		else this.map.on("sourcedata", checkSourceUpdates);
 	}
 
 	addLayers() {
@@ -171,17 +171,23 @@ export class MapController {
 		this.map.on("click", [`${mapboxPointLayerId}-trigger`, mapboxPolygonLayerId], this.handleClick);
 	}
 
-  // arrow function required for desired context
-  handleClick = (e: mapboxgl.EventData) => {
-    // use center prop if available, or revert to click lngLat
+	// arrow function required for desired context
+	handleClick = (e: mapboxgl.EventData) => {
+		// use center prop if available, or revert to click lngLat
 		const center = e.features[0].properties.center ? JSON.parse(e.features[0].properties.center) : e.lngLat;
-    this.goToFeature(center);
+		this.goToFeature(center);
 		this.showFeaturePopup(e.features[0].properties);
 		// add handling for a click that captures multiple features
-	}
+	};
 
 	goToBounds(bounds: mapboxgl.LngLatBoundsLike) {
-		this.map.fitBounds(bounds, { padding: 100 });
+    this.map.fitBounds(bounds, {
+      duration: 1500,
+			// easing: (t) => {
+			// 	return t * t * t;
+			// },
+			padding: 100,
+		});
 	}
 
 	goToFeature(lngLat: mapboxgl.LngLatLike) {

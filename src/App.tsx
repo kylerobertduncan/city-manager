@@ -25,7 +25,7 @@ import "./App.css";
 // import components
 import FeatureDialog from "./components/FeatureDialog";
 import MobileSidebar from "./components/MobileSidebar";
-import Sidebar from "./components/Sidebar";
+import Sidebar from "./components/DesktopSidebar";
 import { LoadNewData, saveCurrentData } from "./fileManager";
 // import other local modules
 import {
@@ -43,7 +43,6 @@ import {
 	liveLineLayer,
 } from "./variables";
 // import markerImg from "./assets/icons8-map-pin-48.png"
-import { mapboxInit, MapController } from "./modules/mapController";
 
 // add url restrictions before releasing production
 // https://docs.mapbox.com/accounts/guides/tokens/#url-restrictions
@@ -667,23 +666,6 @@ export default function App() {
 			<Grid component='main' item xs={12} md={8} lg={9} sx={{ position: "relative" }}>
 				{/* Mapbox container */}
         <Box className='map-container' component='div' height='100dvh' ref={mapContainer} />
-        {/* <Map map={map.current} /> */}
-
-				{/* lngLatZoom readout for dev only */}
-				{/* <Box
-					className='floatingElement'
-					sx={{
-						display: {
-							xs: "none",
-							md: "block",
-						},
-						position: "absolute",
-						top: 0,
-						left: 0,
-					}}
-				>
-					Center: Lng: {mapCenter.lng.toFixed(4)} | Lat: {mapCenter.lat.toFixed(4)} | Zoom: {zoom.toFixed(2)}
-				</Box> */}
 
 				{/* Toolbar */}
 				<Stack

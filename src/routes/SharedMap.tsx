@@ -14,7 +14,7 @@ import "../App.css";
 // import mapHandler from "./mapHandler";
 // import components
 import MobileSidebar from "../components/MobileSidebar";
-import Sidebar from "../components/Sidebar";
+import Sidebar from "../components/DesktopSidebar";
 // import other local modules
 import {
   emptyFeatureCollection,

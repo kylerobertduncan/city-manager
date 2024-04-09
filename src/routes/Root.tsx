@@ -2,7 +2,9 @@
 import Box from "@mui/material/Box";
 import Grid from "@mui/material/Grid";
 import { useEffect, useRef, useState } from "react";
+import { bbox, centerOfMass } from "@turf/turf";
 // import local components
+import Sidebar from "../components/Sidebar";
 // import other local elements
 import { getLocalStorage, setLocalStorage } from "../modules/localStorage";
 import { mapboxInit, MapController } from "../modules/mapController";
@@ -36,19 +38,29 @@ export default function Root() {
 		if (!mapbox.current.isStyleLoaded()) return;
 		// load initial source and layers
 		map.current.setupSource(geojsonData);
-		// map.current.addLayers();
+    // map.current.addLayers(); // incorporated into setupSource
+    mapbox.current.once("idle", onPageLoad);
+  }
+  
+  function onPageLoad() {
+    // is there more elegant way to fire when the map/source is loaded?
+    setTimeout(() => {
+      if (!geojsonData.features.length) return;
+      // add search for new city feature here
+			map.current.goToBounds(bbox(geojsonData) as mapboxgl.LngLatBoundsLike);
+    }, 500)
 	}
 
 	// handle updates to geojsonData:
-	// saves the geojson to local storage
-	// updates the mapbox source data
+	// - saves the geojson to local storage
+	// - updates the mapbox source data
 	useEffect(() => {
 		// prevents overwriting localStorage with empty collection on page load
 		if (!geojsonData.features.length && !map.current.isSourceLoaded()) return;
 		// update localStorage
     setLocalStorage(geojsonData);
 		// update mapbox source data
-		map.current.updateSource(geojsonData);
+    map.current.updateSource(geojsonData);
 	}, [geojsonData]);
 
 	return (
@@ -56,8 +68,12 @@ export default function Root() {
 			{/* map Window */}
 			<Grid component='main' item xs={12} md={8} lg={9} sx={{ position: "relative" }}>
 				{/* mapbox container */}
-				<Box className='map-container' component='div' height='100dvh' ref={mapContainer} />
-			</Grid>
+        <Box className='map-container' component='div' height='100dvh' ref={mapContainer} />
+        {/* toolbar */}
+      </Grid>
+      {/* sidebar */}
+      <Sidebar geojsonData={geojsonData} map={map.current} />
+      {/* dialog(s) */}
 		</Grid>
 	);
 }
