@@ -17,30 +17,30 @@ mapboxgl.accessToken = process.env.REACT_APP_MAPBOX_API_KEY as string;
 
 export function mapboxInit(center: mapboxgl.LngLatLike, container: any, setCenter: (lngLat: mapboxgl.LngLatLike) => void, setZoom: (number: number) => void, zoom: number) {
 	// initialize new map
-	const map = new mapboxgl.Map({
+	const mapbox = new mapboxgl.Map({
 		container: container,
 		style: "mapbox://styles/mapbox/dark-v10",
 		center: center,
 		zoom: zoom,
 	});
 	// setup map listeners for user movement
-	map.on("move", () => {
-		setCenter(map.getCenter());
-		setZoom(map.getZoom());
+	mapbox.on("move", () => {
+		setCenter(mapbox.getCenter());
+		setZoom(mapbox.getZoom());
 	});
-	return map;
+	return mapbox;
 }
 
 export class MapController {
-	map: mapboxgl.Map;
-	constructor(map: mapboxgl.Map) {
-		this.map = map;
+	mapbox: mapboxgl.Map;
+	constructor(mapbox: mapboxgl.Map) {
+		this.mapbox = mapbox;
 	}
 
 	// adds the initial source
 	setupSource(geojsonData: GeoJSON.FeatureCollection) {
-		if (!this.map.getSource(mapboxSourceId)) {
-			this.map.addSource(mapboxSourceId, {
+		if (!this.mapbox.getSource(mapboxSourceId)) {
+			this.mapbox.addSource(mapboxSourceId, {
 				data: geojsonData,
 				type: "geojson",
 			});
@@ -50,13 +50,13 @@ export class MapController {
 
 	// confirms that the source has been created and is loaded
 	isSourceLoaded() {
-		if (this.map.getSource(mapboxSourceId) && this.map.isSourceLoaded(mapboxSourceId)) return true;
+		if (this.mapbox.getSource(mapboxSourceId) && this.mapbox.isSourceLoaded(mapboxSourceId)) return true;
 		else return false;
 	}
 
 	// updates the data for the source
 	setSourceData(geojsonData: GeoJSON.FeatureCollection) {
-		const s = this.map.getSource(mapboxSourceId) as mapboxgl.GeoJSONSource;
+		const s = this.mapbox.getSource(mapboxSourceId) as mapboxgl.GeoJSONSource;
 		s.setData(geojsonData);
 	}
 
@@ -64,18 +64,18 @@ export class MapController {
 	updateSource(geojsonData: GeoJSON.FeatureCollection) {
 		const checkSourceUpdates = (e: mapboxgl.EventData) => {
 			if (e.sourceId === mapboxSourceId && e.isSourceLoaded) {
-				this.map.off("sourcedata", checkSourceUpdates);
+				this.mapbox.off("sourcedata", checkSourceUpdates);
 				this.setSourceData(geojsonData);
 			}
 		};
 		if (this.isSourceLoaded()) this.setSourceData(geojsonData);
-		else this.map.on("sourcedata", checkSourceUpdates);
+		else this.mapbox.on("sourcedata", checkSourceUpdates);
 	}
 
 	addLayers() {
-		if (this.map.getLayer(mapboxPointLayerId)) return;
+		if (this.mapbox.getLayer(mapboxPointLayerId)) return;
 		// add polygon layer
-		this.map.addLayer(
+		this.mapbox.addLayer(
 			{
 				filter: ["==", ["geometry-type"], "Polygon"],
 				id: mapboxPolygonLayerId,
@@ -89,7 +89,7 @@ export class MapController {
 			"land-structure-polygon"
 		);
 		// add polygon boundary layer
-		this.map.addLayer(
+		this.mapbox.addLayer(
 			{
 				filter: ["==", ["geometry-type"], "Polygon"],
 				id: "mapboxPolygonLayerId-line",
@@ -108,7 +108,7 @@ export class MapController {
 			"land-structure-polygon"
 		);
 		// add point layer
-		this.map.addLayer(
+		this.mapbox.addLayer(
 			{
 				filter: ["==", ["geometry-type"], "Point"],
 				id: mapboxPointLayerId,
@@ -148,7 +148,7 @@ export class MapController {
 		// 	"road-label"
 		// );
 		// add hidden trigger layer
-		this.map.addLayer(
+		this.mapbox.addLayer(
 			{
 				filter: ["==", ["geometry-type"], "Point"],
 				id: `${mapboxPointLayerId}-trigger`,
@@ -166,9 +166,9 @@ export class MapController {
 
 	// change cursor to pointer over features/triggers, and respond to clicks
 	handleCursor() {
-		this.map.on("mouseenter", [`${mapboxPointLayerId}-trigger`, mapboxPolygonLayerId], () => (this.map.getCanvas().style.cursor = "pointer"));
-		this.map.on("mouseleave", [`${mapboxPointLayerId}-trigger`, mapboxPolygonLayerId], () => (this.map.getCanvas().style.cursor = ""));
-		this.map.on("click", [`${mapboxPointLayerId}-trigger`, mapboxPolygonLayerId], this.handleClick);
+		this.mapbox.on("mouseenter", [`${mapboxPointLayerId}-trigger`, mapboxPolygonLayerId], () => (this.mapbox.getCanvas().style.cursor = "pointer"));
+		this.mapbox.on("mouseleave", [`${mapboxPointLayerId}-trigger`, mapboxPolygonLayerId], () => (this.mapbox.getCanvas().style.cursor = ""));
+		this.mapbox.on("click", [`${mapboxPointLayerId}-trigger`, mapboxPolygonLayerId], this.handleClick);
 	}
 
 	// arrow function required for desired context
@@ -181,7 +181,7 @@ export class MapController {
 	};
 
 	goToBounds(bounds: mapboxgl.LngLatBoundsLike) {
-    this.map.fitBounds(bounds, {
+    this.mapbox.fitBounds(bounds, {
       duration: 1500,
 			// easing: (t) => {
 			// 	return t * t * t;
@@ -191,7 +191,7 @@ export class MapController {
 	}
 
 	goToFeature(lngLat: mapboxgl.LngLatLike) {
-		this.map.easeTo({
+		this.mapbox.easeTo({
 			center: lngLat,
 			duration: 1000,
 		});
@@ -202,6 +202,6 @@ export class MapController {
 		// close other popups? multiple can be opened from sidebar
 		const lngLat = typeof properties.center == "string" ? JSON.parse(properties.center) : properties.center;
 		const popup = new mapboxgl.Popup({ anchor: "left" });
-		popup.setLngLat(lngLat).setHTML(`<h2 style="color:black;">${properties.name}</h2>`).setMaxWidth("300px").addTo(this.map);
+		popup.setLngLat(lngLat).setHTML(`<h2 style="color:black;">${properties.name}</h2>`).setMaxWidth("300px").addTo(this.mapbox);
 	}
 }
