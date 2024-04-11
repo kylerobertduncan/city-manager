@@ -24,6 +24,8 @@ export default function FeatureCard({ feature, map }: { feature: GeoJSON.Feature
   if (!feature.properties) return null;
   
   const { address, name, notes, tags } = feature.properties;
+
+  
   
   return (
 		<Card raised>

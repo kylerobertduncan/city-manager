@@ -6,11 +6,14 @@ import { bbox, centerOfMass } from "@turf/turf";
 // import local components
 import Sidebar from "../components/Sidebar";
 // import other local elements
+import { GeojsonController } from "../modules/geojsonController";
 import { getLocalStorage, setLocalStorage } from "../modules/localStorage";
 import { mapboxInit, MapController } from "../modules/mapController";
 import { emptyFeatureCollection, emptyFeatureProperties, featureProperties, localStorageId, mapboxSourceId } from "../variables";
 
 export default function Root() {
+  // setup geojson controller
+  const geojson: any = useRef(null);
 	// setup map controller,  object and container
 	const map: any = useRef(null);
 	const mapbox: any = useRef(null);
@@ -24,7 +27,10 @@ export default function Root() {
 	// load initial data from local storage and run mapbox setup
 	useEffect(() => {
     const data = getLocalStorage();
-    if (data) setGeojsonData(data);
+    if (data) {
+      setGeojsonData(data);
+      geojson.current = new GeojsonController(data, setGeojsonData);
+    }
 		mapboxSetup();
 	}, []);
 
