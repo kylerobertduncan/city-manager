@@ -12,31 +12,39 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { MapController } from "../modules/mapController";
+import { useGeojsonDispatch } from "./GeojsonContext";
 
 /*
-  required functions:
+  required functions: ?
   - deleteFeature
   - editFeature
 */
 
 export default function FeatureCard({ feature, map }: { feature: GeoJSON.Feature, map: MapController }) {
   
+  const dispatch = useGeojsonDispatch();
   if (!feature.properties) return null;
-  
   const { address, name, notes, tags } = feature.properties;
+  
+  function deleteFeature(uuid: string) {
+		dispatch({
+			type: "deleted",
+			uuid: uuid,
+		});
+  }
+  
+  
 
-  
-  
   return (
 		<Card raised>
 			<CardHeader
 				avatar={
 					<IconButton
 						aria-label='View feature on map'
-						// onClick={() => {
-						// 	goToFeature(feature.properties!.center);
-						// 	showFeaturePopup(feature.properties!);
-						// }}
+						onClick={() => {
+							map.goToFeature(feature.properties!.center);
+							map.showFeaturePopup(feature.properties!);
+						}}
 						size='small'
 					>
 						{feature.geometry.type === "Point" ? <PlaceIcon /> : <PolylineIcon />}
@@ -68,7 +76,7 @@ export default function FeatureCard({ feature, map }: { feature: GeoJSON.Feature
 				</IconButton>
 				<IconButton
 					aria-label='Delete feature'
-					// onClick={() => deleteFeature(feature.properties!.id)}
+					onClick={() => deleteFeature(feature.properties!.id)}
 					size='small'
 				>
 					<DeleteIcon />

@@ -14,7 +14,7 @@ import { useState } from "react";
 // local components
 import FeatureCard from "./NewFeatureCard";
 // import SidebarHeader from "./SidebarHeader";
-// loa=cal modules
+// local modules
 import { MapController } from "../modules/mapController";
 
 export default function Sidebar({ geojsonData, map }: { geojsonData: GeoJSON.FeatureCollection; map: MapController }) {
@@ -24,6 +24,23 @@ export default function Sidebar({ geojsonData, map }: { geojsonData: GeoJSON.Fea
   const desktop = useMediaQuery(theme.breakpoints.up("md"));
   // set state and functions for mobile drawer
   const [drawerOpen, setDrawerOpen] = useState(false);
+
+  function CardContainer() {
+		return (
+			<Container sx={{ marginTop: "24px" }}>
+				<Grid component='ul' container spacing={3} paddingLeft='0' sx={{}}>
+					{geojsonData.features.map((f: GeoJSON.Feature) => {
+						if (!f.properties) return null;
+						return (
+							<Grid component='li' item key={f.properties.id} xs={12}>
+								<FeatureCard feature={f} map={map} />
+							</Grid>
+						);
+					})}
+				</Grid>
+			</Container>
+		);
+	}
 	
   if (desktop) {
 		return (
@@ -60,18 +77,7 @@ export default function Sidebar({ geojsonData, map }: { geojsonData: GeoJSON.Fea
 					{/* <SharingSwitch geojsonData={geojsonData} /> */}
 				</Toolbar>
 				{/* feature cards */}
-				<Container sx={{ marginTop: "24px" }}>
-					<Grid component='ul' container spacing={3} paddingLeft='0' sx={{}}>
-						{geojsonData.features.map((f: GeoJSON.Feature) => {
-							if (!f.properties) return null;
-							return (
-								<Grid component='li' item key={f.properties.id} xs={12}>
-									<FeatureCard feature={f} map={map} />
-								</Grid>
-							);
-						})}
-					</Grid>
-				</Container>
+        <CardContainer />
 			</Grid>
 		);
   } else {
@@ -121,18 +127,8 @@ export default function Sidebar({ geojsonData, map }: { geojsonData: GeoJSON.Fea
 								</Button>
 							</Tooltip>
 						</Toolbar>
-						<Container sx={{ marginTop: "24px" }}>
-							<Grid component='ul' container spacing={3} paddingLeft='0' sx={{}}>
-								{geojsonData.features.map((f: GeoJSON.Feature) => {
-									if (!f.properties) return null;
-									return (
-										<Grid component='li' item key={f.properties.id} xs={12}>
-											<FeatureCard feature={f} map={map} />
-										</Grid>
-									);
-								})}
-							</Grid>
-						</Container>
+						{/* feature cards */}
+						<CardContainer />
 					</Box>
 				</SwipeableDrawer>
 			</>

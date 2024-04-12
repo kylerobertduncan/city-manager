@@ -1,18 +1,24 @@
 import { createContext, useContext, useReducer } from "react";
-import { emptyFeatureCollection } from "../variables";
-
-export const GeojsonContext = createContext(emptyFeatureCollection);
-export const GeojsonDispatchContext = createContext<any>(null); // create an interface for dispatch?
-
-const initialData: GeoJSON.FeatureCollection = emptyFeatureCollection;
+import { bbox, centerOfMass } from "@turf/turf";
+import { v4 as uuid } from "uuid";
+import { getLocalStorage } from "../modules/localStorage";
+import { emptyFeatureCollection, featureProperties } from "../variables";
 
 interface actionType {
-  type: string,
-  uuid?: string,
-  // other properties as needed
+  coordinates?: number[] | number[][],
+	properties?: featureProperties;
+	type: string;
+	uuid?: string;
+	// other properties as needed
 }
 
-export function GeojsonProvider({ children }:{ children:React.ReactNode[]}) {
+export const GeojsonContext = createContext(emptyFeatureCollection);
+export const GeojsonDispatchContext = createContext<(a: actionType) => void>(null!);
+
+const localData = getLocalStorage();
+const initialData: GeoJSON.FeatureCollection = localData ? localData : emptyFeatureCollection;
+
+export function GeojsonProvider({ children }: { children: React.ReactNode[] }) {
 	const [geojsonData, dispatch] = useReducer(geojsonReducer, initialData);
 
 	return (
@@ -30,32 +36,78 @@ export function useGeojsonDispatch() {
 	return useContext(GeojsonDispatchContext);
 }
 
-function geojsonReducer(geojsonData:GeoJSON.FeatureCollection, action:actionType) {
-	switch (action.type) {
-		case "added": {
-			// return [
-			// 	...geojsonData,
-			// 	{
-			// 		id: action.id,
-			// 		text: action.text,
-			// 		done: false,
-			// 	},
-      // ];
-      return geojsonData; // placeholder
+function geojsonReducer(geojsonData: GeoJSON.FeatureCollection, action: actionType) {
+  switch (action.type) {
+    case "resetData": {
+      return emptyFeatureCollection
+    }
+    // requires geojson feature properties and coordinates
+    case "addedPoint": {
+			// build new feature object
+			const newFeature: GeoJSON.Feature = {
+				type: "Feature",
+				geometry: {
+					type: "Point",
+					coordinates: action.coordinates as number[],
+				},
+				properties: {
+					...action.properties,
+					center: action.coordinates,
+					created: Date.now(),
+					id: uuid(),
+				},
+			};
+			// rebuild data with new feature
+			const newData = { ...geojsonData };
+			newData.features.push(newFeature);
+			return newData;
 		}
-		case "changed": {
-			// return geojsonData.map((t) => {
-			// 	if (t.id === action.task.id) {
-			// 		return action.task;
-			// 	} else {
-			// 		return t;
-			// 	}
-      // });
-      return geojsonData; // placeholder
+    // requires geojson feature properties and coordinates
+		case "addedPolygon": {
+			// build new feature object
+			const newFeature: GeoJSON.Feature = {
+				type: "Feature",
+				geometry: {
+					type: "Polygon",
+					coordinates: [action.coordinates as number[][]],
+				},
+				properties: {
+					...action.properties,
+					created: Date.now(),
+					id: uuid(),
+				},
+			};
+			// add center and bbox coordinates
+			const center = centerOfMass(newFeature.geometry);
+			newFeature.properties!.bbox = bbox(newFeature.geometry);
+			newFeature.properties!.center = center.geometry.coordinates;
+			// rebuild data with new feature
+			const newData = { ...geojsonData };
+			newData.features.push(newFeature);
+			return newData;
 		}
-		case "deleted": {
-      // return geojsonData.filter((t) => t.id !== action.id);
-      return geojsonData; // placeholder
+    // requires geojson feature properties
+    case "changed": {
+			const updatedData = { ...geojsonData };
+			updatedData.features = geojsonData.features.map((f) => {
+				if (f.properties!.id !== action.properties!.id) return f;
+				else {
+					const updatedFeature = { ...f };
+					updatedFeature.properties = { ...action.properties };
+					return updatedFeature;
+				}
+			});
+			return updatedData;
+		}
+    // requires geojson feature uuid
+    case "deleted": {
+      // why does the confirm appear twice? something to do with strict mode?
+      if (!window.confirm("Are you sure you want to delete this feature?")) return geojsonData;
+			const newData = {
+				...geojsonData,
+				features: geojsonData.features.filter((f) => f.properties!.id !== action.uuid),
+			};
+			return newData;
 		}
 		default: {
 			throw Error("Unknown action: " + action.type);

@@ -2,41 +2,31 @@
 import Box from "@mui/material/Box";
 import Grid from "@mui/material/Grid";
 import { useEffect, useRef, useState } from "react";
-import { bbox, centerOfMass } from "@turf/turf";
+import { bbox } from "@turf/turf";
 // import local components
 import Sidebar from "../components/Sidebar";
 // import other local elements
-import { GeojsonController } from "../modules/geojsonController";
-import { getLocalStorage, setLocalStorage } from "../modules/localStorage";
+import { setLocalStorage } from "../modules/localStorage";
 import { mapboxInit, MapController } from "../modules/mapController";
-import { emptyFeatureCollection, emptyFeatureProperties, featureProperties, localStorageId, mapboxSourceId } from "../variables";
+import { useGeojson } from "../components/GeojsonContext";
 
 export default function Root() {
-  // setup geojson controller
-  const geojson: any = useRef(null);
-	// setup map controller,  object and container
+  // setup map controller,  object and container
 	const map: any = useRef(null);
 	const mapbox: any = useRef(null);
 	const mapContainer: any = useRef(null);
 	// setup state for changable map properties
 	const [center, setCenter] = useState<mapboxgl.LngLatLike>({ lng: -79.37, lat: 43.65 });
-	const [zoom, setZoom] = useState(12);
-	// setup state for local storage geojson object
-	const [geojsonData, setGeojsonData] = useState<GeoJSON.FeatureCollection>(emptyFeatureCollection);
+  const [zoom, setZoom] = useState(12);
+  // get geojsonData from context
+  const geojsonData = useGeojson();
 
-	// load initial data from local storage and run mapbox setup
-	useEffect(() => {
-    const data = getLocalStorage();
-    if (data) {
-      setGeojsonData(data);
-      geojson.current = new GeojsonController(data, setGeojsonData);
-    }
-		mapboxSetup();
-	}, []);
+  // setup mapbox on initial render
+  useEffect(mapboxSetup, []);
 
 	function mapboxSetup() {
 		// if no map, initialise new map
-		if (!mapbox.current) mapbox.current = mapboxInit(center, mapContainer.current, setCenter, setZoom, zoom);
+    if (!mapbox.current) mapbox.current = mapboxInit(center, mapContainer.current, setCenter, setZoom, zoom);
 		// if no controller, initialise new controller
 		if (!map.current) map.current = new MapController(mapbox.current);
 		// if map not loaded, re-run when loaded
@@ -49,12 +39,9 @@ export default function Root() {
   }
   
   function onPageLoad() {
-    // is there more elegant way to fire when the map/source is loaded?
-    setTimeout(() => {
-      if (!geojsonData.features.length) return;
-      // add search for new city feature here
-			map.current.goToBounds(bbox(geojsonData) as mapboxgl.LngLatBoundsLike);
-    }, 500)
+    if (!geojsonData.features.length) return;
+    // add search for new city feature here
+    else map.current.goToBounds(bbox(geojsonData) as mapboxgl.LngLatBoundsLike);
 	}
 
 	// handle updates to geojsonData:
