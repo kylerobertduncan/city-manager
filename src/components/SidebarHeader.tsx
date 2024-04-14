@@ -1,10 +1,13 @@
-// import { styled, alpha } from "@mui/material/styles";
+import { styled, alpha } from "@mui/material/styles";
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
-// import IconButton from '@mui/material/IconButton';
-// import InputBase from "@mui/material/InputBase";
-// import MenuIcon from '@mui/icons-material/Menu';
-// import SearchIcon from "@mui/icons-material/Search";
+import Button from "@mui/material/Button";
+import MapIcon from "@mui/icons-material/Map";
+import Tooltip from "@mui/material/Tooltip";
+import IconButton from '@mui/material/IconButton';
+import InputBase from "@mui/material/InputBase";
+import MenuIcon from '@mui/icons-material/Menu';
+import SearchIcon from "@mui/icons-material/Search";
 import Typography from "@mui/material/Typography";
 import Toolbar from "@mui/material/Toolbar";
 
@@ -50,39 +53,46 @@ import Toolbar from "@mui/material/Toolbar";
 // 	},
 // }));
 
-export default function SidebarHeader() {
+export default function SidebarHeader({ desktop, setDrawerOpen }: { desktop: boolean; setDrawerOpen: (boolean: boolean) => void }) {
 	return (
-		<Box>
-			<AppBar position="static">
-				<Toolbar>
-					{/* <IconButton
-            size="large"
-            edge="start"
-            color="inherit"
-            aria-label="open drawer"
-            sx={{ mr: 2 }}
-          >
-            <MenuIcon />
-          </IconButton> */}
-					<Typography
-						variant="h5"
-						noWrap
-						component="h1"
-						// sx={{ flexGrow: 1, display: { xs: "none", sm: "block" } }}
-					>
-						The Second Tradition
-          </Typography>
-					{/* <Search>
-						<SearchIconWrapper>
-							<SearchIcon />
-						</SearchIconWrapper>
-						<StyledInputBase
-							placeholder="Search…"
-							inputProps={{ "aria-label": "search" }}
-						/>
-					</Search> */}
-				</Toolbar>
-			</AppBar>
-		</Box>
+		<Toolbar
+			sx={{
+				bgcolor: "grey.900",
+				display: "flex",
+				justifyContent: "space-between",
+				position: "sticky",
+				top: 0,
+				zIndex: 100,
+			}}
+		>
+			<Typography
+				variant='h5'
+				noWrap
+				component='h1'
+				sx={{ flexGrow: 1, display: { xs: "none", sm: "block" } }}
+			>
+				The Second Tradition
+			</Typography>
+			{desktop ? null : (
+				<Tooltip title='Back to map'>
+					<Button onClick={() => setDrawerOpen(false)} variant='contained' sx={{ minWidth: "auto", px: 1 }}>
+						<MapIcon />
+					</Button>
+				</Tooltip>
+			)}
+			<IconButton size='large' edge='start' color='inherit' aria-label='open drawer' sx={{ ml: 2 }}>
+				<MenuIcon />
+			</IconButton>
+			{/* <SharingSwitch geojsonData={geojsonData} /> */}
+			{/* <Search>
+        <SearchIconWrapper>
+          <SearchIcon />
+        </SearchIconWrapper>
+        <StyledInputBase
+          placeholder="Search…"
+          inputProps={{ "aria-label": "search" }}
+        />
+      </Search> */}
+		</Toolbar>
 	);
 }

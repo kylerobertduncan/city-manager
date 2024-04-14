@@ -1,18 +1,17 @@
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import MapIcon from "@mui/icons-material/Map";
 import Container from "@mui/material/Container";
 import Grid from "@mui/material/Grid";
 import SwipeableDrawer from "@mui/material/SwipeableDrawer";
-import Toolbar from "@mui/material/Toolbar";
 import Tooltip from "@mui/material/Tooltip";
-import Typography from "@mui/material/Typography";
+import MapIcon from "@mui/icons-material/Map";
 import ViewListIcon from "@mui/icons-material/ViewList";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { useTheme } from "@mui/material/styles";
 import { useState } from "react";
 // local components
 import FeatureCard from "./NewFeatureCard";
+import SidebarHeader from "./SidebarHeader";
 // import SidebarHeader from "./SidebarHeader";
 // local modules
 import { MapController } from "../modules/mapController";
@@ -60,22 +59,9 @@ export default function Sidebar({ geojsonData, map }: { geojsonData: GeoJSON.Fea
 						md: "block",
 					},
 				}}
-			>
-				{/* <SidebarHeader /> */}
-				<Toolbar
-					sx={{
-						bgcolor: "grey.900",
-						display: "flex",
-						justifyContent: "space-between",
-						position: "sticky",
-						top: 0,
-					}}
-				>
-					<Typography component='h1' variant='h5'>
-						The Second Tradition
-					</Typography>
-					{/* <SharingSwitch geojsonData={geojsonData} /> */}
-				</Toolbar>
+      >
+				{/* sidebar header (and menu) */}
+        <SidebarHeader desktop={desktop} setDrawerOpen={setDrawerOpen} />
 				{/* feature cards */}
         <CardContainer />
 			</Grid>
@@ -106,31 +92,37 @@ export default function Sidebar({ geojsonData, map }: { geojsonData: GeoJSON.Fea
 						<ViewListIcon />
 					</Button>
 				</Tooltip>
+
 				<SwipeableDrawer anchor='right' onClose={() => setDrawerOpen(false)} onOpen={() => setDrawerOpen(true)} open={drawerOpen} transitionDuration={350}>
 					<Box width='350px'>
-						<Toolbar
-							sx={{
-								bgcolor: "grey.900",
-								display: "flex",
-								justifyContent: "space-between",
-								position: "sticky",
-								top: 0,
-							}}
-						>
-							<Typography component='h1' variant='h5'>
-								The Second Tradition
-							</Typography>
-							{/* <SharingSwitch geojsonData={geojsonData} /> */}
-							<Tooltip title='Back to map'>
-								<Button onClick={() => setDrawerOpen(false)} variant='contained' sx={{ minWidth: "auto", px: 1 }}>
-									<MapIcon />
-								</Button>
-							</Tooltip>
-						</Toolbar>
+						{/* sidebar header (and menu) */}
+						<SidebarHeader desktop={desktop} setDrawerOpen={setDrawerOpen} />
 						{/* feature cards */}
 						<CardContainer />
 					</Box>
 				</SwipeableDrawer>
+				{/* <Tooltip title='Back to map'>
+					<Button
+						onClick={() => setDrawerOpen(false)}
+						variant='contained'
+						sx={{
+							// px: 1,
+							opacity: 0.9,
+							display: {
+								xs: drawerOpen ? "inline-flex" : "none",
+								md: "none",
+							},
+							minWidth: "auto",
+							p: 1,
+							position: "absolute",
+							left: 0,
+							top: "50%",
+							translate: "-50%",
+						}}
+					>
+						<MapIcon />
+					</Button>
+				</Tooltip> */}
 			</>
 		);
   }

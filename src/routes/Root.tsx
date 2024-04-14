@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { bbox } from "@turf/turf";
 // import local components
 import Sidebar from "../components/Sidebar";
+import Toolbar from "../components/Toolbar";
 // import other local elements
 import { setLocalStorage } from "../modules/localStorage";
 import { mapboxInit, MapController } from "../modules/mapController";
@@ -63,6 +64,7 @@ export default function Root() {
 				{/* mapbox container */}
         <Box className='map-container' component='div' height='100dvh' ref={mapContainer} />
         {/* toolbar */}
+        <Toolbar />
       </Grid>
       {/* sidebar */}
       <Sidebar geojsonData={geojsonData} map={map.current} />
