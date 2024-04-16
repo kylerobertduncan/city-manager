@@ -12,18 +12,19 @@ interface actionType {
 	// other properties as needed
 }
 
-export const GeojsonContext = createContext(emptyFeatureCollection);
-export const GeojsonDispatchContext = createContext<(a: actionType) => void>(null!);
+const GeojsonContext = createContext(emptyFeatureCollection);
+const GeojsonDispatchContext = createContext<(a: actionType) => void>(null!);
 
 const localData = getLocalStorage();
 const initialData: GeoJSON.FeatureCollection = localData ? localData : emptyFeatureCollection;
 
 export function GeojsonProvider({ children }: { children: React.ReactNode[] }) {
 	const [geojsonData, dispatch] = useReducer(geojsonReducer, initialData);
-
 	return (
 		<GeojsonContext.Provider value={geojsonData}>
-			<GeojsonDispatchContext.Provider value={dispatch}>{children}</GeojsonDispatchContext.Provider>
+      <GeojsonDispatchContext.Provider value={dispatch}>
+        {children}
+      </GeojsonDispatchContext.Provider>
 		</GeojsonContext.Provider>
 	);
 }
