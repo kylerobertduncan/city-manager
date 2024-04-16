@@ -20,22 +20,22 @@ import { useGeojsonDispatch } from "./GeojsonContext";
   - editFeature
 */
 
-export default function FeatureCard({ feature, map }: { feature: GeoJSON.Feature, map: MapController }) {
-  
-  const dispatch = useGeojsonDispatch();
-  if (!feature.properties) return null;
-  const { address, name, notes, tags } = feature.properties;
-  
-  function deleteFeature(uuid: string) {
+export default function FeatureCard({ feature, map }: { feature: GeoJSON.Feature; map: MapController }) {
+	const dispatch = useGeojsonDispatch();
+
+	if (!feature.properties) return null;
+	const { address, name, notes, tags } = feature.properties;
+
+	function deleteFeature(uuid: string) {
 		dispatch({
 			type: "deleted",
 			uuid: uuid,
 		});
-  }
-  
-  
+	}
 
-  return (
+	// edit feature
+
+	return (
 		<Card raised>
 			<CardHeader
 				avatar={
@@ -54,7 +54,7 @@ export default function FeatureCard({ feature, map }: { feature: GeoJSON.Feature
 				titleTypographyProps={{ component: "h2", variant: "h5" }}
 				subheader={address ? address : "Subheader (address?) here"}
 				action={
-					<IconButton aria-label="Options" disabled size="small">
+					<IconButton aria-label='Options' disabled size='small'>
 						<MoreVertIcon />
 					</IconButton>
 				}
@@ -74,11 +74,7 @@ export default function FeatureCard({ feature, map }: { feature: GeoJSON.Feature
 				>
 					<EditIcon />
 				</IconButton>
-				<IconButton
-					aria-label='Delete feature'
-					onClick={() => deleteFeature(feature.properties!.id)}
-					size='small'
-				>
+				<IconButton aria-label='Delete feature' onClick={() => deleteFeature(feature.properties!.id)} size='small'>
 					<DeleteIcon />
 				</IconButton>
 			</CardActions>

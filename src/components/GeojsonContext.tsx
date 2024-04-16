@@ -18,7 +18,7 @@ const GeojsonDispatchContext = createContext<(a: actionType) => void>(null!);
 const localData = getLocalStorage();
 const initialData: GeoJSON.FeatureCollection = localData ? localData : emptyFeatureCollection;
 
-export function GeojsonProvider({ children }: { children: React.ReactNode[] }) {
+export function GeojsonProvider({ children }: { children: React.ReactNode }) {
 	const [geojsonData, dispatch] = useReducer(geojsonReducer, initialData);
 	return (
 		<GeojsonContext.Provider value={geojsonData}>
