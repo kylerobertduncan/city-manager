@@ -4,6 +4,7 @@ import {
   mapboxSourceId,
   mapboxPointLayerId,
   mapboxPolygonLayerId,
+  featureProperties,
   // newPolygonSource,
   // newPolygonPointLayer,
   // newPolygonLineLayer,
@@ -33,8 +34,10 @@ export function mapboxInit(center: mapboxgl.LngLatLike, container: any, setCente
 
 export class MapController {
 	mapbox: mapboxgl.Map;
+	popups: mapboxgl.Popup[];
 	constructor(mapbox: mapboxgl.Map) {
 		this.mapbox = mapbox;
+		this.popups = [];
 	}
 
 	// adds the initial source
@@ -161,18 +164,25 @@ export class MapController {
 			},
 			"road-label"
 		);
-		this.handleCursor();
+		this.triggerCursor();
 	}
+
+	defaultCursor = () => {
+		this.mapbox.getCanvas().style.cursor = "default";
+	};
+	pointerCursor = () => {
+		this.mapbox.getCanvas().style.cursor = "pointer";
+	};
 
 	// change cursor to pointer over features/triggers, and respond to clicks
-	handleCursor() {
-		this.mapbox.on("mouseenter", [`${mapboxPointLayerId}-trigger`, mapboxPolygonLayerId], () => (this.mapbox.getCanvas().style.cursor = "pointer"));
-		this.mapbox.on("mouseleave", [`${mapboxPointLayerId}-trigger`, mapboxPolygonLayerId], () => (this.mapbox.getCanvas().style.cursor = ""));
-		this.mapbox.on("click", [`${mapboxPointLayerId}-trigger`, mapboxPolygonLayerId], this.handleClick);
-	}
+	triggerCursor () {
+		this.mapbox.on("mouseenter", [`${mapboxPointLayerId}-trigger`, mapboxPolygonLayerId], this.pointerCursor);
+		this.mapbox.on("mouseleave", [`${mapboxPointLayerId}-trigger`, mapboxPolygonLayerId], this.defaultCursor);
+		this.mapbox.on("click", [`${mapboxPointLayerId}-trigger`, mapboxPolygonLayerId], this.handleFeatureClick);
+	};
 
 	// arrow function required for desired context
-	handleClick = (e: mapboxgl.EventData) => {
+	handleFeatureClick = (e: mapboxgl.EventData) => {
 		// use center prop if available, or revert to click lngLat
 		const center = e.features[0].properties.center ? JSON.parse(e.features[0].properties.center) : e.lngLat;
 		this.goToFeature(center);
@@ -181,8 +191,8 @@ export class MapController {
 	};
 
 	goToBounds(bounds: mapboxgl.LngLatBoundsLike) {
-    this.mapbox.fitBounds(bounds, {
-      duration: 1500,
+		this.mapbox.fitBounds(bounds, {
+			duration: 1500,
 			// easing: (t) => {
 			// 	return t * t * t;
 			// },
@@ -200,8 +210,10 @@ export class MapController {
 	showFeaturePopup(properties: mapboxgl.EventData) {
 		if (!properties) return;
 		// close other popups? multiple can be opened from sidebar
+		if (this.popups.length) this.popups.forEach((popup) => popup.remove());
 		const lngLat = typeof properties.center == "string" ? JSON.parse(properties.center) : properties.center;
 		const popup = new mapboxgl.Popup({ anchor: "left" });
 		popup.setLngLat(lngLat).setHTML(`<h2 style="color:black;">${properties.name}</h2>`).setMaxWidth("300px").addTo(this.mapbox);
+		this.popups.push(popup);
 	}
 }
