@@ -12,13 +12,16 @@ import { useState } from "react";
 // local components
 import FeatureCard from "./NewFeatureCard";
 import SidebarHeader from "./SidebarHeader";
-// import SidebarHeader from "./SidebarHeader";
+import SidebarFooter from "./SidebarFooter";
 // local modules
 import { MapController } from "../modules/mapController";
+
+import { saveCurrentData } from "../fileManager";
 
 export default function Sidebar({
 	cardFunctions,
 	geojsonData,
+	loadNewData,
 	map,
 }: {
 	cardFunctions: {
@@ -27,6 +30,7 @@ export default function Sidebar({
 		remove: (uuid: string) => void;
 	};
 	geojsonData: GeoJSON.FeatureCollection;
+	loadNewData: (newGeojsonData: GeoJSON.FeatureCollection) => void;
 	map: MapController;
 }) {
 	// establish screen size
@@ -35,6 +39,10 @@ export default function Sidebar({
 	const desktop = useMediaQuery(theme.breakpoints.up("md"));
 	// set state and functions for mobile drawer
 	const [drawerOpen, setDrawerOpen] = useState(false);
+
+	function save() {
+		saveCurrentData(geojsonData);
+	}
 
 	function SidebarContent() {
 		return (
@@ -61,16 +69,20 @@ export default function Sidebar({
 									key={f.properties.id}
 									xs={12}>
 									<FeatureCard
-                    feature={f}
-                    // edit={cardFunctions.edit}
-                    goTo={cardFunctions.goTo}
-                    remove={cardFunctions.remove}
+										feature={f}
+										// edit={cardFunctions.edit}
+										goTo={cardFunctions.goTo}
+										remove={cardFunctions.remove}
 									/>
 								</Grid>
 							);
 						})}
 					</Grid>
 				</Container>
+        <SidebarFooter
+          load={loadNewData}
+          save={save}
+        />
 			</>
 		);
 	}
@@ -128,8 +140,9 @@ export default function Sidebar({
 					onOpen={() => setDrawerOpen(true)}
 					open={drawerOpen}
 					transitionDuration={350}>
-					<Box width="350px">
+					<Box position="relative" width="350px">
 						<SidebarContent />
+						<SidebarFooter load={loadNewData} save={save}/>
 					</Box>
 				</SwipeableDrawer>
 				{/* <Tooltip title='Back to map'>

@@ -6,6 +6,7 @@ import { bbox, centerOfMass } from "@turf/turf";
 // import local components
 import Sidebar from '../components/Sidebar';
 import Toolbar from '../components/Toolbar';
+import { LoadNewData, saveCurrentData } from "../fileManager";
 // import other local elements
 import { getLocalStorage, setLocalStorage } from "../modules/localStorage";
 import { mapboxInit, MapController } from '../modules/mapController';
@@ -62,7 +63,7 @@ export default function Root() {
     if (map.current) map.current.updateSource(geojsonData);
   }, [geojsonData]);
 
-  /* Geojson Handlers */
+  /* geojson handlers */
 
   function getCenter(geometry: GeoJSON.Geometry) {
     if (geometry.type === "Point") return geometry.coordinates;
@@ -110,7 +111,17 @@ export default function Root() {
 		// clear mapbox source data
 		map.current.updateSource(emptyFeatureCollection);
   }
-  
+
+  /* load/save handlers */
+
+  function loadNewData(newGeojsonData: GeoJSON.FeatureCollection) {
+		if (!window.confirm("Loading this data will overwrite any existing features. Are you sure you want to continue?")) return;
+		// find all popups and remove them!
+		setGeojsonData(newGeojsonData);
+  }
+
+  // function bundles for props
+
   const cardFunctions = {
     edit: handleEditFeature,
     goTo: map.current ? map.current.goToWithPopup : null,
@@ -142,7 +153,8 @@ export default function Root() {
 			{/* sidebar */}
       <Sidebar
         cardFunctions={cardFunctions}
-				geojsonData={geojsonData}
+        geojsonData={geojsonData}
+        loadNewData={loadNewData}
 				map={map.current}
 			/>
 			{/* dialog(s) */}
