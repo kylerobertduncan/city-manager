@@ -45,6 +45,7 @@ export default function Toolbar({ handleAddFeature, handleRemoveAll, map }: {
 		map.defaultCursor();
 	}, [map]);
 
+  // const handleAddPolygon = useCallback(() => {}, []);
   
   function handleActiveTool(_: React.MouseEvent, tool: string) {
 		// handle click of current tool

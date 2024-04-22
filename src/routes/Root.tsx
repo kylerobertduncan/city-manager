@@ -6,7 +6,6 @@ import { bbox, centerOfMass } from "@turf/turf";
 // import local components
 import Sidebar from '../components/Sidebar';
 import Toolbar from '../components/Toolbar';
-import { LoadNewData, saveCurrentData } from "../fileManager";
 // import other local elements
 import { getLocalStorage, setLocalStorage } from "../modules/localStorage";
 import { mapboxInit, MapController } from '../modules/mapController';
