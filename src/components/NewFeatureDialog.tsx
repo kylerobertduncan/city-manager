@@ -6,44 +6,42 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
 import TextField from "@mui/material/TextField";
-
-import { featureProperties } from "../variables";
 import { useState } from "react";
 import { v4 as uuid } from "uuid";
+import { featureProperties, emptyFeatureProperties } from "../variables";
 
-export default function FeatureDialog({
-  isOpen,
-  handleCancel,
-  handleSubmit
-}: {
-  isOpen: boolean;
-  handleCancel: () => void;
-  handleSubmit: () => void
-  }) {
-  
-  function handleClose() {}
-  
-  const [properties, setProperties] = useState<featureProperties>({
-    created: Date.now(),
-    id: uuid(),
-    name: "",
-    tags: "",
-    notes: ""
-  });
+export default function FeatureDialog({ geometry, handleAddFeature, handleCloseDialog, isOpen }: { geometry: GeoJSON.Point | GeoJSON.Polygon; handleAddFeature: (newFeature: GeoJSON.Feature) => void; handleCloseDialog: () => void; isOpen: boolean; }) {
+	const [properties, setProperties] = useState<featureProperties>(emptyFeatureProperties);
 
-  const updateProperties = (e:React.ChangeEvent<HTMLInputElement>) => {
-    console.log(e.target.name, e.target.value);
-    setProperties({
-      ...properties,
-      [e.target.name]: e.target.value,
-    });
-  }
+	const updateProperties = (e: React.ChangeEvent<HTMLInputElement>) => {
+		setProperties({
+			...properties,
+			[e.target.name]: e.target.value,
+		});
+	};
+	function handleSubmit() {
+		// build feature
+		const newFeature:GeoJSON.Feature = {
+			type: "Feature",
+			geometry: geometry,
+			properties: {
+				...properties,
+				created: Date.now(),
+				uuid: uuid(),
+			},
+    };
+    handleAddFeature(newFeature);
+		// close and reset tools
+		handleCloseDialog();
+	}
 
 	return (
-    <Dialog onClose={handleClose} open={isOpen}>
-			<DialogTitle>Title</DialogTitle>
+		<Dialog
+			onClose={handleCloseDialog}
+			open={isOpen}>
+			<DialogTitle>Add New Feature</DialogTitle>
 			<DialogContent>
-				<DialogContentText>Instructions</DialogContentText>
+				<DialogContentText>Add some details about your new feature.</DialogContentText>
 				<TextField
 					autoFocus
 					required
@@ -83,7 +81,7 @@ export default function FeatureDialog({
 					Submit
 				</Button>
 				<Button
-					onClick={handleCancel}
+					onClick={handleCloseDialog}
 					variant="outlined">
 					Cancel
 				</Button>

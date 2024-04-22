@@ -61,6 +61,7 @@ export class MapController {
 	setSourceData(geojsonData: GeoJSON.FeatureCollection) {
 		const s = this.mapbox.getSource(mapboxSourceId) as mapboxgl.GeoJSONSource;
 		s.setData(geojsonData);
+		console.debug("Mapbox source updated with new data:", geojsonData);
 	}
 
 	// checks the source is loaded before updating data
@@ -175,11 +176,11 @@ export class MapController {
 	};
 
 	// change cursor to pointer over features/triggers, and respond to clicks
-	triggerCursor () {
+	triggerCursor() {
 		this.mapbox.on("mouseenter", [`${mapboxPointLayerId}-trigger`, mapboxPolygonLayerId], this.pointerCursor);
 		this.mapbox.on("mouseleave", [`${mapboxPointLayerId}-trigger`, mapboxPolygonLayerId], this.defaultCursor);
 		this.mapbox.on("click", [`${mapboxPointLayerId}-trigger`, mapboxPolygonLayerId], this.handleFeatureClick);
-	};
+	}
 
 	// arrow function required for desired context
 	handleFeatureClick = (e: mapboxgl.EventData) => {
@@ -210,10 +211,20 @@ export class MapController {
 	showFeaturePopup(properties: mapboxgl.EventData) {
 		if (!properties) return;
 		// close other popups? multiple can be opened from sidebar
-		if (this.popups.length) this.popups.forEach((popup) => popup.remove());
+    // if (this.popups.length) this.popups.forEach((popup) => popup.remove());
+    this.clearAllPopups();
 		const lngLat = typeof properties.center == "string" ? JSON.parse(properties.center) : properties.center;
 		const popup = new mapboxgl.Popup({ anchor: "left" });
 		popup.setLngLat(lngLat).setHTML(`<h2 style="color:black;">${properties.name}</h2>`).setMaxWidth("300px").addTo(this.mapbox);
 		this.popups.push(popup);
 	}
+
+	goToWithPopup = (properties: mapboxgl.EventData) => {
+		this.goToFeature(properties.center);
+		this.showFeaturePopup(properties);
+	};
+
+	clearAllPopups() {
+		if (this.popups.length) this.popups.forEach((popup) => popup.remove());
+	};
 }

@@ -2,52 +2,52 @@
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
 import { useEffect, useRef, useState } from 'react';
-import { bbox } from '@turf/turf';
+import { bbox, centerOfMass } from "@turf/turf";
 // import local components
 import Sidebar from '../components/Sidebar';
 import Toolbar from '../components/Toolbar';
 // import other local elements
-import { setLocalStorage } from '../modules/localStorage';
+import { getLocalStorage, setLocalStorage } from "../modules/localStorage";
 import { mapboxInit, MapController } from '../modules/mapController';
-import { useGeojson } from '../components/GeojsonContext';
+import { emptyFeatureCollection } from '../variables';
 
 export default function Root() {
 	// setup map controller,  object and container
-	// const map: any = useRef(null);
-	const [map, setMap] = useState<MapController>(null!);
+	const map: any = useRef(null);
 	const mapbox: any = useRef(null);
 	const mapContainer: any = useRef(null);
 	// setup state for changable map properties
 	const [center, setCenter] = useState<mapboxgl.LngLatLike>({ lng: -79.37, lat: 43.65 });
 	const [zoom, setZoom] = useState(12);
-	// get geojsonData from context
-	const geojsonData = useGeojson();
+	// setup geojsonData in state
+  const [geojsonData, setGeojsonData] = useState(emptyFeatureCollection);
 
 	// setup mapbox on initial render
-	useEffect(mapboxSetup, [center, geojsonData, mapboxSetup, onPageLoad, zoom]);
+	useEffect(mapboxSetup, []);
 
-	function mapboxSetup() {
-		// if no map, initialise new map
+  function mapboxSetup() {
+    const localData = getLocalStorage();
+    if (localData) setGeojsonData(localData);
+    // if no map, initialise new map
 		if (!mapbox.current) mapbox.current = mapboxInit(center, mapContainer.current, setCenter, setZoom, zoom);
 		// if map not loaded, re-run when loaded
 		if (!mapbox.current.loaded()) mapbox.current.on('load', mapboxSetup);
 		if (!mapbox.current.isStyleLoaded()) return;
 		// if no controller, initialise new controller
-		if (!map) setMap(new MapController(mapbox.current));
-		// if (!map.current) map.current = new MapController(mapbox.current);
+		if (!map.current) map.current = new MapController(mapbox.current);
 		// load initial source and layers
-		if (map) map.setupSource(geojsonData);
-		// map.current.addLayers(); // incorporated into setupSource
+		map.current.setupSource(geojsonData);
 		// why does this keep firing?
-		// re-renders from setup useEffect ?
+		// re-renders from setup useEffect when all dependencies are added
 		// also seems to break featureCard easeTo ??
-		// mapbox.current.once("idle", onPageLoad);
+		mapbox.current.once("idle", onPageLoad);
 	}
 
-	function onPageLoad() {
+  function onPageLoad() {
+    // because there's no data on initial load, it doesn't fire except on page refresh
 		if (!geojsonData.features.length) return;
 		// add search for new city feature here
-		else map.goToBounds(bbox(geojsonData) as mapboxgl.LngLatBoundsLike);
+		else map.current.goToBounds(bbox(geojsonData) as mapboxgl.LngLatBoundsLike);
 	}
 
 	// handle updates to geojsonData:
@@ -55,14 +55,69 @@ export default function Root() {
 	// - updates the mapbox source data
 	useEffect(() => {
 		// prevents overwriting localStorage with empty collection on page load
-		if (!geojsonData.features.length && !map.isSourceLoaded()) return;
+		if (!geojsonData.features.length && !map.current?.isSourceLoaded()) return;
 		// update localStorage
 		setLocalStorage(geojsonData);
 		// update mapbox source data
-		if (map) map.updateSource(geojsonData);
-	}, [geojsonData]);
+    if (map.current) map.current.updateSource(geojsonData);
+  }, [geojsonData]);
 
-	return (
+  /* Geojson Handlers */
+
+  function getCenter(geometry: GeoJSON.Geometry) {
+    if (geometry.type === "Point") return geometry.coordinates;
+    if (geometry.type === "Polygon") return centerOfMass(geometry);
+  }
+
+  function handleAddFeature(newFeature: GeoJSON.Feature) {
+    if (!newFeature.properties) return;
+    if (!newFeature.properties.center) newFeature.properties.center = getCenter(newFeature.geometry);
+    if (newFeature.geometry.type === "Polygon") newFeature.properties.bbox = bbox(newFeature.geometry);
+    const updatedData = { ...geojsonData }
+    updatedData.features.push(newFeature);
+    setGeojsonData(updatedData);
+  }
+
+  function handleEditFeature(updatedFeature: GeoJSON.Feature) {
+    const updatedData = { ...geojsonData };
+		updatedData.features = geojsonData.features.map((f) => {
+			if (f.properties!.id !== updatedFeature.properties!.id) return f;
+			else {
+				const updatedFeature = { ...f };
+				updatedFeature.properties = { ...updatedFeature.properties };
+				return updatedFeature;
+			}
+    });
+    setGeojsonData(updatedData);
+  }
+
+  function handleRemoveFeature(uuid: string) {
+    if (!window.confirm("Are you sure you want to delete this feature?")) return;
+		const updatedData = {
+			...geojsonData,
+			features: geojsonData.features.filter((f) => f.properties!.id !== uuid),
+    };
+    setGeojsonData(updatedData);
+    map.current.clearAllPopups();
+  }
+  
+  function handleRemoveAll() {
+    if (!window.confirm("Are you sure you want to delete all features?")) return;
+    // remove data from state
+    setGeojsonData(emptyFeatureCollection)
+		// clear localStorage
+		setLocalStorage(emptyFeatureCollection);
+		// clear mapbox source data
+		map.current.updateSource(emptyFeatureCollection);
+  }
+  
+  const cardFunctions = {
+    edit: handleEditFeature,
+    goTo: map.current ? map.current.goToWithPopup : null,
+    remove: handleRemoveFeature,
+  }
+  
+  return (
 		<Grid
 			container
 			className='App'>
@@ -82,12 +137,13 @@ export default function Root() {
 					ref={mapContainer}
 				/>
 				{/* toolbar */}
-				<Toolbar map={map} />
+        <Toolbar handleAddFeature={handleAddFeature} handleRemoveAll={handleRemoveAll} map={map.current} />
 			</Grid>
 			{/* sidebar */}
-			<Sidebar
+      <Sidebar
+        cardFunctions={cardFunctions}
 				geojsonData={geojsonData}
-				map={map}
+				map={map.current}
 			/>
 			{/* dialog(s) */}
 		</Grid>

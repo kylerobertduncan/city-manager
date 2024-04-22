@@ -8,7 +8,6 @@ import theme from "./theme";
 import App from "./App";
 import ErrorPage from "./routes/Error";
 import Root from "./routes/Root";
-import { GeojsonProvider } from "./components/GeojsonContext";
 import SharedMap, { shareLoader } from "./routes/SharedMap";
 // reporting (delete?)
 import reportWebVitals from "./reportWebVitals";
@@ -38,10 +37,8 @@ const root = ReactDOM.createRoot(
 root.render(
 	<React.StrictMode>
     <ThemeProvider theme={theme}>
-      <GeojsonProvider>
         <CssBaseline />
         <RouterProvider router={router}/>
-      </GeojsonProvider>
 		</ThemeProvider>
 	</React.StrictMode>
 );

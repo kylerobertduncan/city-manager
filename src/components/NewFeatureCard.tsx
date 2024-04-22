@@ -11,76 +11,59 @@ import PolylineIcon from '@mui/icons-material/Polyline';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import { MapController } from '../modules/mapController';
-import { useGeojsonDispatch } from './GeojsonContext';
 
-/*
-  required functions: ?
-  - deleteFeature
-  - editFeature
-*/
-
-export default function FeatureCard({ feature, map }: { feature: GeoJSON.Feature; map: MapController }) {
-	const dispatch = useGeojsonDispatch();
+export default function FeatureCard({ feature, /* edit, */ goTo, remove }: {
+  feature: GeoJSON.Feature;
+  // edit: (feature: GeoJSON.Feature) => void;
+  goTo: (properties: mapboxgl.EventData) => void;
+  remove: (uuid: string) => void;
+}) {
 
 	if (!feature.properties) return null;
-	const { address, name, notes, tags } = feature.properties;
-
-	function deleteFeature(uuid: string) {
-		dispatch({
-			type: 'deleted',
-			uuid: uuid,
-		});
-	}
-
-	// edit feature
+	
+  const { address, name, notes, tags } = feature.properties;
 
 	return (
 		<Card raised>
 			<CardHeader
 				avatar={
 					<IconButton
-						aria-label='View feature on map'
-						onClick={() => {
-							console.log('go to feature:', feature.properties?.name);
-
-							map.goToFeature(feature.properties!.center);
-							map.showFeaturePopup(feature.properties!);
-						}}
-						size='small'>
-						{feature.geometry.type === 'Point' ? <PlaceIcon /> : <PolylineIcon />}
+						aria-label="View feature on map"
+						onClick={() => goTo(feature.properties!)}
+						size="small">
+						{feature.geometry.type === "Point" ? <PlaceIcon /> : <PolylineIcon />}
 					</IconButton>
 				}
-				title={name ? name : 'Location Name'}
-				titleTypographyProps={{ component: 'h2', variant: 'h5' }}
-				subheader={address ? address : 'Subheader (address?) here'}
+				title={name ? name : "Location Name"}
+				titleTypographyProps={{ component: "h2", variant: "h5" }}
+				subheader={address ? address : "Subheader (address?) here"}
 				action={
 					<IconButton
-						aria-label='Options'
+						aria-label="Options"
 						disabled
-						size='small'>
+						size="small">
 						<MoreVertIcon />
 					</IconButton>
 				}
 			/>
 			<CardContent>
 				{/* switch tags and address? */}
-				<Typography gutterBottom>{tags ? tags : 'Tags'}</Typography>
+				<Typography gutterBottom>{tags ? tags : "Tags"}</Typography>
 				{/* Add collapse to show/hide notes and other details */}
-				<Typography variant='body2'>{notes ? notes : 'Notes'}</Typography>
+				<Typography variant="body2">{notes ? notes : "Notes"}</Typography>
 			</CardContent>
 			{/* move this to a pop out menu at top right */}
 			<CardActions>
 				<IconButton
-					aria-label='Edit feature'
-					// onClick={() => editFeature(feature)}
-					size='small'>
+					aria-label="Edit feature"
+					// onClick={() => edit(feature.properties!.id)}
+					size="small">
 					<EditIcon />
 				</IconButton>
 				<IconButton
-					aria-label='Delete feature'
-					onClick={() => deleteFeature(feature.properties!.id)}
-					size='small'>
+					aria-label="Delete feature"
+					onClick={() => remove(feature.properties!.id)}
+					size="small">
 					<DeleteIcon />
 				</IconButton>
 			</CardActions>

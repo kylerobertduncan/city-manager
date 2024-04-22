@@ -10,7 +10,7 @@ import PolylineIcon from "@mui/icons-material/Polyline";
 // import action button icons
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
+// import MoreVertIcon from "@mui/icons-material/MoreVert";
 
 export default function FeatureCard({
 	deleteFeature,

@@ -19,7 +19,8 @@ export function setLocalStorage(geojsonData:GeoJSON.FeatureCollection) {
 	// convert current data to a string and update localStorage
 	try {
 		const s = JSON.stringify(geojsonData);
-		if (s) localStorage.setItem(localStorageId, s);
+    if (s) localStorage.setItem(localStorageId, s);
+    console.debug("Local Storage updated with new data:", geojsonData);
 	} catch (error: any) {
 		console.error("Error updating local storage data:", error.message);
 	}
