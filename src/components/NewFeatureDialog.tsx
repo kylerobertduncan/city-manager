@@ -18,7 +18,13 @@ export default function FeatureDialog({ geometry, handleAddFeature, handleCloseD
 			...properties,
 			[e.target.name]: e.target.value,
 		});
-	};
+  };
+  
+  function closeDialog() {
+    setProperties(emptyFeatureProperties);
+    handleCloseDialog();
+  }
+
 	function handleSubmit() {
 		// build feature
 		const newFeature:GeoJSON.Feature = {
@@ -27,17 +33,16 @@ export default function FeatureDialog({ geometry, handleAddFeature, handleCloseD
 			properties: {
 				...properties,
 				created: Date.now(),
-				uuid: uuid(),
+				id: uuid(),
 			},
     };
     handleAddFeature(newFeature);
-		// close and reset tools
-		handleCloseDialog();
+		closeDialog();
 	}
 
 	return (
 		<Dialog
-			onClose={handleCloseDialog}
+			onClose={closeDialog}
 			open={isOpen}>
 			<DialogTitle>Add New Feature</DialogTitle>
 			<DialogContent>
@@ -81,7 +86,7 @@ export default function FeatureDialog({ geometry, handleAddFeature, handleCloseD
 					Submit
 				</Button>
 				<Button
-					onClick={handleCloseDialog}
+					onClick={closeDialog}
 					variant="outlined">
 					Cancel
 				</Button>

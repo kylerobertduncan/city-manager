@@ -72,6 +72,28 @@ export const newFeature: GeoJSON.Feature = {
 	},
 };
 
+export const newPolygonFeatureCollection:GeoJSON.FeatureCollection = {
+	type: "FeatureCollection",
+	features: [
+		{
+			type: "Feature",
+			properties: {},
+			geometry: {
+				type: "LineString",
+				coordinates: [],
+			},
+		},
+		{
+			type: "Feature",
+			properties: {},
+			geometry: {
+				type: "MultiPoint",
+				coordinates: [],
+			},
+		},
+	],
+};
+
 export const mapboxLayers = [
 	"land (background)",
 	"landcover (fill)",

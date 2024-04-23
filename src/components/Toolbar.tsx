@@ -20,98 +20,114 @@ export default function Toolbar({ handleAddFeature, handleRemoveAll, map }: {
   handleRemoveAll: () => void,
   map: MapController
 }) {
-
-  const [activeTool, setActiveTool] = useState("select");
+	const [activeTool, setActiveTool] = useState("select");
 	const [newFeatureDialogOpen, setNewFeatureDialogOpen] = useState(false);
-  const [newFeatureGeometry, setNewFeatureGeometry] = useState<GeoJSON.Point | GeoJSON.Polygon>({ type: "Point", coordinates: [] });
-  const [newPolygonCoordinates, setNewPolygonCoordinates] = useState<GeoJSON.Position[]>([])
-  
-  function handleCloseDialog() {
-    setNewFeatureDialogOpen(false);
-    setNewFeatureGeometry({ type: "Point", coordinates: [] })
-    setActiveTool("select");
-  }
+	const [newFeatureGeometry, setNewFeatureGeometry] = useState<GeoJSON.Point | GeoJSON.Polygon>({ type: "Point", coordinates: [] });
 
-  const handleAddPoint = useCallback((e: mapboxgl.EventData) => {
-		// flyTo lngLat
-		map.goToFeature(e.lngLat);
-		// set lngLat as newGeometry
-		setNewFeatureGeometry({
-			type: "Point",
-			coordinates: [e.lngLat.lng, e.lngLat.lat],
-		});
-		// open new feature dialog
-		setNewFeatureDialogOpen(true);
-		// reset cursor
-		map.defaultCursor();
-	}, [map]);
+	function handleCloseDialog() {
+		setNewFeatureDialogOpen(false);
+    setNewFeatureGeometry({ type: "Point", coordinates: [] });
+    map.updateNewPolygonSource([]);
+		setActiveTool("select");
+	}
 
-  function handleAddPolygon(e: mapboxgl.EventData) {
-		e.preventDefault();
-    map.mapbox.off("click", savePoints);
-    setNewFeatureGeometry((currentGeometry) => {
-      const coordinates = currentGeometry.coordinates[0] as GeoJSON.Position[];
-      return {
-        type: "Polygon",
-        coordinates: [[
-          ...coordinates,
-          coordinates[0],
-        ]],
-      };
-		});
-		// open new feature dialog
-		setNewFeatureDialogOpen(true);
-		// reset cursor
-		map.defaultCursor();
-  }
+	const handleAddPoint = useCallback(
+		(e: mapboxgl.EventData) => {
+			// flyTo lngLat
+			map.goToFeature(e.lngLat);
+			// set lngLat as newGeometry
+			setNewFeatureGeometry({
+				type: "Point",
+				coordinates: [e.lngLat.lng, e.lngLat.lat],
+			});
+			// open new feature dialog
+			setNewFeatureDialogOpen(true);
+			// reset cursor
+			map.defaultCursor();
+		},
+		[map]
+	);
 
-  function savePoints(e: mapboxgl.EventData) {
-    setNewFeatureGeometry((currentGeometry) => {
-      const coordinates = currentGeometry.coordinates[0] as GeoJSON.Position[];
-      return {
+	const handleAddPolygon = useCallback(
+		(e: mapboxgl.EventData) => {
+			e.preventDefault();
+			map.mapbox.off("click", savePoints);
+			setNewFeatureGeometry((currentGeometry) => {
+				const coordinates = currentGeometry.coordinates[0] as GeoJSON.Position[];
+				return {
+					type: "Polygon",
+					coordinates: [[...coordinates, coordinates[0]]],
+				};
+			});
+			// open new feature dialog
+			setNewFeatureDialogOpen(true);
+			// reset cursor
+			map.defaultCursor();
+		},
+		[map]
+	);
+
+	// trigger conditional draft rendering from here
+  useEffect(() => {
+		const polygonCoordinates = newFeatureGeometry.coordinates[0] as GeoJSON.Position[];
+		// avert any action on page mount
+		if (!polygonCoordinates) return;
+    // update static draft polygon
+    map.updateNewPolygonSource(polygonCoordinates);
+		// setNewPolygonDraft();
+		// update live lines draft polygon
+		// if (newPolygonCoordinates.length === 1 || newPolygonCoordinates[0] !== newPolygonCoordinates[newPolygonCoordinates.length - 1]) setNewPolygonLiveLine();
+	}, [newFeatureGeometry]);
+
+	const savePoints = useCallback((e: mapboxgl.EventData) => {
+		setNewFeatureGeometry((currentGeometry) => {
+			const coordinates = currentGeometry.coordinates[0] as GeoJSON.Position[];
+			return {
 				type: "Polygon",
-        coordinates: [[
-          ...coordinates,
-          [e.lngLat.lng, e.lngLat.lat]
-        ]],
-			}
-    })
-  }
+				coordinates: [[...coordinates, [e.lngLat.lng, e.lngLat.lat]]],
+			};
+		});
+	}, []);
 
-  function addPolygonListener() {
-    // update geometry template
-    setNewFeatureGeometry({
+	function addPolygonListener() {
+		// update geometry template
+		setNewFeatureGeometry({
 			type: "Polygon",
 			coordinates: [[]],
 		});
 		// start listening for the users clicks to add points
 		map.mapbox.on("click", savePoints);
-    // start listening for a user double click to add feature
-    map.mapbox.once("dblclick", handleAddPolygon);
+		// start listening for a user double click to add feature
+		map.mapbox.once("dblclick", handleAddPolygon);
+		// start listening for mouse movement to show polyLines
 	}
-  
-  function handleActiveTool(_: React.MouseEvent, tool: string) {
+
+	function handleActiveTool(_: React.MouseEvent, tool: string) {
 		// handle click of current tool
-    if (!tool) return;
-    // remove listener for previous tool
-    if (activeTool === "polygon") {}
-    if (activeTool === "point") map.mapbox.off("click", handleAddPoint);
-    // change tool in state
-    setActiveTool(tool);
-    // handle different tools
-    if (tool === "point") {
+		if (!tool) return;
+		// remove listener for previous tool
+		if (activeTool === "polygon") {
+      map.updateNewPolygonSource([]);
+			map.mapbox.off("click", savePoints);
+      map.mapbox.off("dblclick", handleAddPolygon);
+		}
+		if (activeTool === "point") map.mapbox.off("click", handleAddPoint);
+		// change tool in state
+		setActiveTool(tool);
+		// handle different tools
+		if (tool === "point") {
 			map.pointerCursor();
 			map.mapbox.once("click", handleAddPoint);
 		}
-    if (tool === "polygon") {
-      map.pointerCursor();
-      addPolygonListener();
-    }
-    if (tool === "removeAll") {
-      handleRemoveAll();
-      setActiveTool("select");
-    }
-    if (tool === "select") map.defaultCursor();
+		if (tool === "polygon") {
+			map.pointerCursor();
+			addPolygonListener();
+		}
+		if (tool === "removeAll") {
+			handleRemoveAll();
+			setActiveTool("select");
+		}
+		if (tool === "select") map.defaultCursor();
 	}
 
 	return (
@@ -176,8 +192,8 @@ export default function Toolbar({ handleAddFeature, handleRemoveAll, map }: {
 			{/* feature dialog to collect properties */}
 			<FeatureDialog
 				geometry={newFeatureGeometry}
-        handleAddFeature={handleAddFeature}
-        handleCloseDialog={handleCloseDialog}
+				handleAddFeature={handleAddFeature}
+				handleCloseDialog={handleCloseDialog}
 				isOpen={newFeatureDialogOpen}
 			/>
 		</>

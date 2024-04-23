@@ -5,9 +5,10 @@ import {
   mapboxPointLayerId,
   mapboxPolygonLayerId,
   featureProperties,
-  // newPolygonSource,
-  // newPolygonPointLayer,
-  // newPolygonLineLayer,
+  newPolygonSource,
+  newPolygonPointLayer,
+  newPolygonLineLayer,
+  newPolygonFeatureCollection,
   // liveLineSource,
   // liveLineLayer
 } from "../variables";
@@ -40,15 +41,19 @@ export class MapController {
 		this.popups = [];
 	}
 
-	// adds the initial source
-	setupSource(geojsonData: GeoJSON.FeatureCollection) {
-		if (!this.mapbox.getSource(mapboxSourceId)) {
-			this.mapbox.addSource(mapboxSourceId, {
-				data: geojsonData,
+	addNewSource(data: GeoJSON.FeatureCollection, id: string) {
+		if (!this.mapbox.getSource(id)) {
+			this.mapbox.addSource(id, {
+				data: data,
 				type: "geojson",
 			});
-			this.addLayers();
 		}
+	}
+
+	// adds the initial source
+	setupSource(geojsonData: GeoJSON.FeatureCollection) {
+		this.addNewSource(geojsonData, mapboxSourceId);
+		this.addLayers();
 	}
 
 	// confirms that the source has been created and is loaded
@@ -211,8 +216,8 @@ export class MapController {
 	showFeaturePopup(properties: mapboxgl.EventData) {
 		if (!properties) return;
 		// close other popups? multiple can be opened from sidebar
-    // if (this.popups.length) this.popups.forEach((popup) => popup.remove());
-    this.clearAllPopups();
+		// if (this.popups.length) this.popups.forEach((popup) => popup.remove());
+		this.clearAllPopups();
 		const lngLat = typeof properties.center == "string" ? JSON.parse(properties.center) : properties.center;
 		const popup = new mapboxgl.Popup({ anchor: "left" });
 		popup.setLngLat(lngLat).setHTML(`<h2 style="color:black;">${properties.name}</h2>`).setMaxWidth("300px").addTo(this.mapbox);
@@ -226,5 +231,50 @@ export class MapController {
 
 	clearAllPopups() {
 		if (this.popups.length) this.popups.forEach((popup) => popup.remove());
-	};
+	}
+
+  setupNewPolygonSource(polygonCoordinates: GeoJSON.Position[]) {
+    const data = { ...newPolygonFeatureCollection }
+    data.features.forEach(f => {
+      (f.geometry as any).coordinates = polygonCoordinates;
+    })
+		this.addNewSource(data, newPolygonSource);
+		this.setupNewPolygonLayers();
+	}
+
+  updateNewPolygonSource(polygonCoordinates: GeoJSON.Position[]) {
+    const s = this.mapbox.getSource(newPolygonSource) as mapboxgl.GeoJSONSource;
+    if (!s) this.setupNewPolygonSource(polygonCoordinates);
+    else {
+      const data = { ...newPolygonFeatureCollection };
+			data.features.forEach((f) => {
+				(f.geometry as GeoJSON.LineString).coordinates = polygonCoordinates;
+      });
+      s.setData(data);
+    }
+  }
+
+	setupNewPolygonLayers() {
+		if (!this.mapbox.getSource(newPolygonSource)) return;
+		if (!this.mapbox.getLayer(newPolygonLineLayer)) {
+			this.mapbox.addLayer({
+				id: newPolygonLineLayer,
+				source: newPolygonSource,
+				type: "line",
+				paint: {
+					"line-color": "red",
+				},
+			});
+		}
+		if (!this.mapbox.getLayer(newPolygonPointLayer)) {
+			this.mapbox.addLayer({
+				id: newPolygonPointLayer,
+				source: newPolygonSource,
+				type: "circle",
+				paint: {
+					"circle-color": "red",
+				},
+			});
+		}
+	}
 }

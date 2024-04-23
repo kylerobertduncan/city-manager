@@ -36,7 +36,8 @@ export default function Root() {
 		// if no controller, initialise new controller
 		if (!map.current) map.current = new MapController(mapbox.current);
 		// load initial source and layers
-		map.current.setupSource(geojsonData);
+    map.current.setupSource(geojsonData);
+    map.current.setupNewPolygonSource([]);
 		// why does this keep firing?
 		// re-renders from setup useEffect when all dependencies are added
 		// also seems to break featureCard easeTo ??
@@ -60,13 +61,17 @@ export default function Root() {
 		setLocalStorage(geojsonData);
 		// update mapbox source data
     if (map.current) map.current.updateSource(geojsonData);
+    console.debug("geojsonData updated:", geojsonData);
   }, [geojsonData]);
 
   /* geojson handlers */
 
   function getCenter(geometry: GeoJSON.Geometry) {
     if (geometry.type === "Point") return geometry.coordinates;
-    if (geometry.type === "Polygon") return centerOfMass(geometry);
+    if (geometry.type === "Polygon") {
+      const centerPoint = centerOfMass(geometry);
+      return centerPoint.geometry.coordinates;
+    }
   }
 
   function handleAddFeature(newFeature: GeoJSON.Feature) {
