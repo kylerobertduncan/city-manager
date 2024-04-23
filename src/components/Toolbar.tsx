@@ -11,7 +11,7 @@ import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import Tooltip from "@mui/material/Tooltip";
 // react components
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { MapController } from "../modules/mapController";
 import FeatureDialog from "./NewFeatureDialog";
 
@@ -24,6 +24,7 @@ export default function Toolbar({ handleAddFeature, handleRemoveAll, map }: {
   const [activeTool, setActiveTool] = useState("select");
 	const [newFeatureDialogOpen, setNewFeatureDialogOpen] = useState(false);
   const [newFeatureGeometry, setNewFeatureGeometry] = useState<GeoJSON.Point | GeoJSON.Polygon>({ type: "Point", coordinates: [] });
+  const [newPolygonCoordinates, setNewPolygonCoordinates] = useState<GeoJSON.Position[]>([])
   
   function handleCloseDialog() {
     setNewFeatureDialogOpen(false);
@@ -45,7 +46,49 @@ export default function Toolbar({ handleAddFeature, handleRemoveAll, map }: {
 		map.defaultCursor();
 	}, [map]);
 
-  // const handleAddPolygon = useCallback(() => {}, []);
+  function handleAddPolygon(e: mapboxgl.EventData) {
+		e.preventDefault();
+    map.mapbox.off("click", savePoints);
+    setNewFeatureGeometry((currentGeometry) => {
+      const coordinates = currentGeometry.coordinates[0] as GeoJSON.Position[];
+      return {
+        type: "Polygon",
+        coordinates: [[
+          ...coordinates,
+          coordinates[0],
+        ]],
+      };
+		});
+		// open new feature dialog
+		setNewFeatureDialogOpen(true);
+		// reset cursor
+		map.defaultCursor();
+  }
+
+  function savePoints(e: mapboxgl.EventData) {
+    setNewFeatureGeometry((currentGeometry) => {
+      const coordinates = currentGeometry.coordinates[0] as GeoJSON.Position[];
+      return {
+				type: "Polygon",
+        coordinates: [[
+          ...coordinates,
+          [e.lngLat.lng, e.lngLat.lat]
+        ]],
+			}
+    })
+  }
+
+  function addPolygonListener() {
+    // update geometry template
+    setNewFeatureGeometry({
+			type: "Polygon",
+			coordinates: [[]],
+		});
+		// start listening for the users clicks to add points
+		map.mapbox.on("click", savePoints);
+    // start listening for a user double click to add feature
+    map.mapbox.once("dblclick", handleAddPolygon);
+	}
   
   function handleActiveTool(_: React.MouseEvent, tool: string) {
 		// handle click of current tool
@@ -60,7 +103,10 @@ export default function Toolbar({ handleAddFeature, handleRemoveAll, map }: {
 			map.pointerCursor();
 			map.mapbox.once("click", handleAddPoint);
 		}
-    if (tool === "polygon") { }
+    if (tool === "polygon") {
+      map.pointerCursor();
+      addPolygonListener();
+    }
     if (tool === "removeAll") {
       handleRemoveAll();
       setActiveTool("select");
