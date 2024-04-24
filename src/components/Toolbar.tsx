@@ -74,9 +74,14 @@ export default function Toolbar({ handleAddFeature, handleRemoveAll, map }: {
 		if (!polygonCoordinates) return;
     // update static draft polygon
     map.updateNewPolygonSource(polygonCoordinates);
-		// setNewPolygonDraft();
-		// update live lines draft polygon
-		// if (newPolygonCoordinates.length === 1 || newPolygonCoordinates[0] !== newPolygonCoordinates[newPolygonCoordinates.length - 1]) setNewPolygonLiveLine();
+    // update live lines draft polygon
+    if (
+      polygonCoordinates.length === 1 ||
+      polygonCoordinates[0] !== polygonCoordinates[polygonCoordinates.length - 1]
+    ) {
+      // this will create multiple unnecessary calls
+      map.setupLivelineSource(polygonCoordinates);
+    }
 	}, [newFeatureGeometry]);
 
 	const savePoints = useCallback((e: mapboxgl.EventData) => {

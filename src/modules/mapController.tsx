@@ -9,9 +9,10 @@ import {
   newPolygonPointLayer,
   newPolygonLineLayer,
   newPolygonFeatureCollection,
-  // liveLineSource,
-  // liveLineLayer
+  liveLineSource,
+  liveLineLayer
 } from "../variables";
+import { PollOutlined } from "@mui/icons-material";
 
 // add url restrictions before releasing production
 // https://docs.mapbox.com/accounts/guides/tokens/#url-restrictions
@@ -41,7 +42,7 @@ export class MapController {
 		this.popups = [];
 	}
 
-	addNewSource(data: GeoJSON.FeatureCollection, id: string) {
+	addNewSource(data: GeoJSON.Feature | GeoJSON.FeatureCollection, id: string) {
 		if (!this.mapbox.getSource(id)) {
 			this.mapbox.addSource(id, {
 				data: data,
@@ -233,26 +234,26 @@ export class MapController {
 		if (this.popups.length) this.popups.forEach((popup) => popup.remove());
 	}
 
-  setupNewPolygonSource(polygonCoordinates: GeoJSON.Position[]) {
-    const data = { ...newPolygonFeatureCollection }
-    data.features.forEach(f => {
-      (f.geometry as any).coordinates = polygonCoordinates;
-    })
+	setupNewPolygonSource(polygonCoordinates: GeoJSON.Position[]) {
+		const data = { ...newPolygonFeatureCollection };
+		data.features.forEach((f) => {
+			(f.geometry as any).coordinates = polygonCoordinates;
+		});
 		this.addNewSource(data, newPolygonSource);
 		this.setupNewPolygonLayers();
 	}
 
-  updateNewPolygonSource(polygonCoordinates: GeoJSON.Position[]) {
-    const s = this.mapbox.getSource(newPolygonSource) as mapboxgl.GeoJSONSource;
-    if (!s) this.setupNewPolygonSource(polygonCoordinates);
-    else {
-      const data = { ...newPolygonFeatureCollection };
+	updateNewPolygonSource(polygonCoordinates: GeoJSON.Position[]) {
+		const s = this.mapbox.getSource(newPolygonSource) as mapboxgl.GeoJSONSource;
+		if (!s) this.setupNewPolygonSource(polygonCoordinates);
+		else {
+			const data = { ...newPolygonFeatureCollection };
 			data.features.forEach((f) => {
 				(f.geometry as GeoJSON.LineString).coordinates = polygonCoordinates;
-      });
-      s.setData(data);
-    }
-  }
+			});
+			s.setData(data);
+		}
+	}
 
 	setupNewPolygonLayers() {
 		if (!this.mapbox.getSource(newPolygonSource)) return;
@@ -277,4 +278,56 @@ export class MapController {
 			});
 		}
 	}
+
+  setupLivelineSource(polygonCoordinates: GeoJSON.Position[]) {
+		this.addNewSource(
+			{
+				type: "Feature",
+				properties: {},
+				geometry: {
+					type: "LineString",
+					coordinates: polygonCoordinates,
+				},
+			},
+			liveLineSource
+		);
+		this.setupLivelineLayer();
+	}
+
+	updateLivelineSource(e:mapboxgl.EventData, polygonCoordinates: GeoJSON.Position[]) {
+		const s = this.mapbox.getSource(liveLineSource) as mapboxgl.GeoJSONSource;
+		if (!s) this.setupLivelineSource(polygonCoordinates);
+    else s.setData({
+			type: "Feature",
+			properties: {},
+			geometry: {
+				type: "LineString",
+				coordinates: [],
+			},
+    });
+    console.log(this.calculateLiveLineCoordinates([e.lngLat.lng, e.lngLat.lat], polygonCoordinates));
+    
+  }
+  
+  setupLivelineLayer() {
+    if (!this.mapbox.getSource(liveLineSource)) return;
+    if (!this.mapbox.getLayer(liveLineLayer)) {
+			this.mapbox.addLayer({
+				id: liveLineLayer,
+				source: liveLineSource,
+				type: "line",
+				paint: {
+					"line-color": "orange",
+				},
+			});
+		}
+  }
+
+  calculateLiveLineCoordinates(cursorLngLat: GeoJSON.Position | null, polygonCoordinates: GeoJSON.Position[]) {
+    const p = polygonCoordinates.slice(-1);
+    const lastPoint = [...p[0]];
+    if (!cursorLngLat) return [lastPoint, lastPoint];
+		else if (polygonCoordinates.length === 1) return [lastPoint, cursorLngLat];
+		else if (polygonCoordinates.length > 1) return [lastPoint, cursorLngLat, polygonCoordinates[0]];
+  }
 }
