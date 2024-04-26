@@ -22,13 +22,13 @@ export default function Toolbar({ handleAddFeature, handleRemoveAll, map }: {
 }) {
 	const [activeTool, setActiveTool] = useState("select");
 	const [newFeatureDialogOpen, setNewFeatureDialogOpen] = useState(false);
-	const [newFeatureGeometry, setNewFeatureGeometry] = useState<GeoJSON.Point | GeoJSON.Polygon>({ type: "Point", coordinates: [] });
-
+  const [newFeatureGeometry, setNewFeatureGeometry] = useState<GeoJSON.Point | GeoJSON.Polygon>({ type: "Point", coordinates: [] });
+  
 	function handleCloseDialog() {
 		setNewFeatureDialogOpen(false);
     setNewFeatureGeometry({ type: "Point", coordinates: [] });
     map.updateNewPolygonSource([]);
-		setActiveTool("select");
+    setActiveTool("select");
 	}
 
 	const handleAddPoint = useCallback(
@@ -51,7 +51,8 @@ export default function Toolbar({ handleAddFeature, handleRemoveAll, map }: {
 	const handleAddPolygon = useCallback(
 		(e: mapboxgl.EventData) => {
 			e.preventDefault();
-			map.mapbox.off("click", savePoints);
+      map.mapbox.off("click", savePoints);
+      map.mapbox.off("mousemove", handleLiveLine);
 			setNewFeatureGeometry((currentGeometry) => {
 				const coordinates = currentGeometry.coordinates[0] as GeoJSON.Position[];
 				return {
@@ -65,23 +66,26 @@ export default function Toolbar({ handleAddFeature, handleRemoveAll, map }: {
 			map.defaultCursor();
 		},
 		[map]
-	);
+  );
+  
+  // const handleLiveLine = useCallback(
+	// 	(e: mapboxgl.EventData) => {
+  //     console.log("map.updateLivelineSource fires");
+  //     map.updateLivelineSource(e);
+	// 	},
+	// 	[map]
+  // );
+  
+  function handleLiveLine(e: mapboxgl.EventData) {map.updateLivelineSource(e);}
 
 	// trigger conditional draft rendering from here
   useEffect(() => {
-		const polygonCoordinates = newFeatureGeometry.coordinates[0] as GeoJSON.Position[];
-		// avert any action on page mount
+    const polygonCoordinates = newFeatureGeometry.coordinates[0] as GeoJSON.Position[];
+    // avert any action on page mount
 		if (!polygonCoordinates) return;
     // update static draft polygon
     map.updateNewPolygonSource(polygonCoordinates);
-    // update live lines draft polygon
-    if (
-      polygonCoordinates.length === 1 ||
-      polygonCoordinates[0] !== polygonCoordinates[polygonCoordinates.length - 1]
-    ) {
-      // this will create multiple unnecessary calls
-      map.setupLivelineSource(polygonCoordinates);
-    }
+    // map.updateLiveLineFixedPoints(polygonCoordinates);
 	}, [newFeatureGeometry]);
 
 	const savePoints = useCallback((e: mapboxgl.EventData) => {
@@ -91,7 +95,7 @@ export default function Toolbar({ handleAddFeature, handleRemoveAll, map }: {
 				type: "Polygon",
 				coordinates: [[...coordinates, [e.lngLat.lng, e.lngLat.lat]]],
 			};
-		});
+    });
 	}, []);
 
 	function addPolygonListener() {
@@ -104,7 +108,9 @@ export default function Toolbar({ handleAddFeature, handleRemoveAll, map }: {
 		map.mapbox.on("click", savePoints);
 		// start listening for a user double click to add feature
 		map.mapbox.once("dblclick", handleAddPolygon);
-		// start listening for mouse movement to show polyLines
+    // start listening for mouse movement to show polyLines
+    // map.setupLivelineSource([]);
+    // map.mapbox.on("mousemove", handleLiveLine);
 	}
 
 	function handleActiveTool(_: React.MouseEvent, tool: string) {
@@ -113,8 +119,9 @@ export default function Toolbar({ handleAddFeature, handleRemoveAll, map }: {
 		// remove listener for previous tool
 		if (activeTool === "polygon") {
       map.updateNewPolygonSource([]);
-			map.mapbox.off("click", savePoints);
+      map.mapbox.off("click", savePoints);
       map.mapbox.off("dblclick", handleAddPolygon);
+      // map.mapbox.off("mousemove", handleLiveLine);
 		}
 		if (activeTool === "point") map.mapbox.off("click", handleAddPoint);
 		// change tool in state

@@ -12,7 +12,7 @@ import {
   liveLineSource,
   liveLineLayer
 } from "../variables";
-import { PollOutlined } from "@mui/icons-material";
+import { Coronavirus, PollOutlined } from "@mui/icons-material";
 
 // add url restrictions before releasing production
 // https://docs.mapbox.com/accounts/guides/tokens/#url-restrictions
@@ -36,10 +36,18 @@ export function mapboxInit(center: mapboxgl.LngLatLike, container: any, setCente
 
 export class MapController {
 	mapbox: mapboxgl.Map;
+	liveLine: {
+		first: GeoJSON.Position | null;
+		last: GeoJSON.Position | null;
+	};
 	popups: mapboxgl.Popup[];
 	constructor(mapbox: mapboxgl.Map) {
 		this.mapbox = mapbox;
 		this.popups = [];
+		this.liveLine = {
+			first: null,
+			last: null,
+		};
 	}
 
 	addNewSource(data: GeoJSON.Feature | GeoJSON.FeatureCollection, id: string) {
@@ -279,14 +287,16 @@ export class MapController {
 		}
 	}
 
-  setupLivelineSource(polygonCoordinates: GeoJSON.Position[]) {
+	setupLivelineSource(polygonCoordinates: GeoJSON.Position[]) {
+		console.log("setupLiveLineSource fires");
+		if (this.liveLine.first === null) this.updateLiveLineFixedPoints(polygonCoordinates);
 		this.addNewSource(
 			{
 				type: "Feature",
 				properties: {},
 				geometry: {
 					type: "LineString",
-					coordinates: polygonCoordinates,
+					coordinates: [this.liveLine.first!, this.liveLine.last ? this.liveLine.last : null!],
 				},
 			},
 			liveLineSource
@@ -294,24 +304,10 @@ export class MapController {
 		this.setupLivelineLayer();
 	}
 
-	updateLivelineSource(e:mapboxgl.EventData, polygonCoordinates: GeoJSON.Position[]) {
-		const s = this.mapbox.getSource(liveLineSource) as mapboxgl.GeoJSONSource;
-		if (!s) this.setupLivelineSource(polygonCoordinates);
-    else s.setData({
-			type: "Feature",
-			properties: {},
-			geometry: {
-				type: "LineString",
-				coordinates: [],
-			},
-    });
-    console.log(this.calculateLiveLineCoordinates([e.lngLat.lng, e.lngLat.lat], polygonCoordinates));
-    
-  }
-  
-  setupLivelineLayer() {
-    if (!this.mapbox.getSource(liveLineSource)) return;
-    if (!this.mapbox.getLayer(liveLineLayer)) {
+	setupLivelineLayer() {
+		console.log("setupLiveLineLayer fires");
+		if (!this.mapbox.getSource(liveLineSource)) return;
+		if (!this.mapbox.getLayer(liveLineLayer)) {
 			this.mapbox.addLayer({
 				id: liveLineLayer,
 				source: liveLineSource,
@@ -321,13 +317,66 @@ export class MapController {
 				},
 			});
 		}
-  }
+	}
 
-  calculateLiveLineCoordinates(cursorLngLat: GeoJSON.Position | null, polygonCoordinates: GeoJSON.Position[]) {
-    const p = polygonCoordinates.slice(-1);
-    const lastPoint = [...p[0]];
-    if (!cursorLngLat) return [lastPoint, lastPoint];
-		else if (polygonCoordinates.length === 1) return [lastPoint, cursorLngLat];
-		else if (polygonCoordinates.length > 1) return [lastPoint, cursorLngLat, polygonCoordinates[0]];
-  }
+	updateLivelineSource(e: mapboxgl.EventData) {
+		console.log("updateLiveLineSource fires");
+		const s = this.mapbox.getSource(liveLineSource) as mapboxgl.GeoJSONSource;
+		if (!s) return;
+		s.setData({
+			type: "Feature",
+			properties: {},
+			geometry: {
+				type: "LineString",
+				coordinates: [this.liveLine.first!, [e.lngLat.lng, e.lngLat.lat], this.liveLine.last ? this.liveLine.last : null!],
+			},
+		});
+	}
+
+	resetLiveLineFixedPoints() {
+		this.liveLine = {
+			first: null,
+			last: null,
+		};
+	}
+
+	updateLiveLineFixedPoints(polygonCoordinates: GeoJSON.Position[]) {
+		if (!polygonCoordinates.length) return;
+		this.liveLine.first = polygonCoordinates[0];
+		if (polygonCoordinates[0] !== polygonCoordinates[polygonCoordinates.length - 1]) {
+			this.liveLine.last = polygonCoordinates[polygonCoordinates.length - 1];
+    }
+	}
+
+  // updateLiveLineMousePoint(e: mapboxgl.EventData) {
+  //   const s = this.mapbox.getSource(liveLineSource) as mapboxgl.GeoJSONSource;
+	// 	if (!s) return;
+	// 	s.setData({
+	// 		type: "Feature",
+	// 		properties: {},
+	// 		geometry: {
+	// 			type: "LineString",
+	// 			coordinates: [this.liveLine.first!, [e.lngLat.lng, e.lngLat.lat], this.liveLine.last ? this.liveLine.last : null!],
+	// 		},
+	// 	});
+  // };
+
+	calculateLiveLineCoordinates(cursorLngLat: GeoJSON.Position | null, polygonCoordinates: GeoJSON.Position[]) {
+		console.log("calculateLiveLineCoordinates fires");
+		const p = polygonCoordinates.slice(-1);
+		// const lastPoint: GeoJSON.Position = [...p[0]];
+		const coordinates: GeoJSON.Position[] = [p[0]];
+		if (polygonCoordinates.length) coordinates.push(cursorLngLat as GeoJSON.Position);
+		if (polygonCoordinates.length === 1) return coordinates;
+		else if (polygonCoordinates.length > 1) {
+			coordinates.push(polygonCoordinates[0] as GeoJSON.Position);
+			return coordinates;
+		} else {
+			coordinates.push(p[0]);
+			return coordinates;
+		}
+		// if (polygonCoordinates.length === 1) return [lastPoint, cursorLngLat];
+		// else if (polygonCoordinates.length > 1) return [lastPoint, cursorLngLat, polygonCoordinates[0]];
+		// else return [lastPoint, lastPoint];
+	}
 }
