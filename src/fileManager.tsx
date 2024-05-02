@@ -47,24 +47,3 @@ export function LoadNewData({ onImport }: { onImport: (newData:GeoJSON.FeatureCo
   };
   return <VisuallyHiddenInput type="file" accept=".prxs" onChange={handleNewFile}/>
 }
-
-export const JsonFileImporter: React.FC<{ onImport: (data: object) => void }> = ({ onImport }) => {
-	const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-		const file = event.target.files?.[0];
-		if (!file) return;
-
-		const reader = new FileReader();
-		reader.onload = (event) => {
-			if (!event.target?.result) return;
-			try {
-				const jsonData = JSON.parse(event.target.result as string);
-				onImport(jsonData);
-			} catch (error) {
-				console.error("Error parsing JSON file:", error);
-			}
-		};
-		reader.readAsText(file);
-	};
-
-	return <input type='file' accept='.prxs' onChange={handleFileChange} />;
-};

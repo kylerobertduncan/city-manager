@@ -101,28 +101,6 @@ export default function MobileSidebar({
 								})}
 							</Grid>
 						</Container>
-						{/* <Container>
-							<a
-								target="_blank"
-								href="https://icons8.com/icon/92345/drop-of-blood"
-							>
-								Blood
-							</a>{" "}
-							icon by{" "}
-							<a target="_blank" href="https://icons8.com">
-								Icons8
-							</a>
-							<a
-								target="_blank"
-								href="https://icons8.com/icon/vurh7-um5eMM/drop-of-blood"
-							>
-								Blood
-							</a>{" "}
-							icons by{" "}
-							<a target="_blank" href="https://icons8.com">
-								Icons8
-							</a>
-						</Container> */}
 					</Box>
 				</SwipeableDrawer>
 			</>

@@ -1,79 +1,173 @@
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
 import Container from "@mui/material/Container";
 import Grid from "@mui/material/Grid";
-import Typography from "@mui/material/Typography";
-import Toolbar from "@mui/material/Toolbar";
+import SwipeableDrawer from "@mui/material/SwipeableDrawer";
+import Tooltip from "@mui/material/Tooltip";
+// import MapIcon from "@mui/icons-material/Map";
+import ViewListIcon from "@mui/icons-material/ViewList";
+import useMediaQuery from "@mui/material/useMediaQuery";
+import { useTheme } from "@mui/material/styles";
+import { useState } from "react";
+// local components
+import FeatureCard from "./NewFeatureCard";
+import SidebarHeader from "./SidebarHeader";
+import SidebarFooter from "./SidebarFooter";
+// local modules
+import { MapController } from "../modules/mapController";
 
-// import SidebarHeader from "./SidebarHeader";
-
-import SharingSwitch from "./SharingSwitch";
-import FeatureCard from "./FeatureCard";
+import { saveCurrentData } from "../fileManager";
 
 export default function Sidebar({
+	cardFunctions,
 	geojsonData,
-	featureCardFunctions,
+	loadNewData,
+	map,
 }: {
-	geojsonData: GeoJSON.FeatureCollection;
-	featureCardFunctions: {
-		deleteFeature: (id: string) => void;
-		editFeature: (feature: GeoJSON.Feature) => void;
-		goToFeature: (e: GeoJSON.Position) => void;
-		showFeaturePopup: (e: mapboxgl.EventData) => void;
+	cardFunctions: {
+		edit: (feature: GeoJSON.Feature) => void;
+		goTo: (properties: mapboxgl.EventData) => void;
+		remove: (uuid: string) => void;
 	};
+	geojsonData: GeoJSON.FeatureCollection;
+	loadNewData: (newGeojsonData: GeoJSON.FeatureCollection) => void;
+	map: MapController;
 }) {
-	return (
-		<Grid
-			component='aside'
-			item
-			maxHeight='100vh'
-			position='relative'
-			xs={12}
-			md={4}
-			lg={3}
-			sx={{
-				overflowY: "scroll",
-				display: {
-					xs: "none",
-					md: "block",
-				},
-			}}
-		>
-			{/* <SidebarHeader /> */}
-			<Toolbar
+	// establish screen size
+	const theme = useTheme();
+	// should this be in state?
+	const desktop = useMediaQuery(theme.breakpoints.up("md"));
+	// set state and functions for mobile drawer
+	const [drawerOpen, setDrawerOpen] = useState(false);
+
+	function save() {
+		saveCurrentData(geojsonData);
+	}
+
+	function SidebarContent() {
+		return (
+			<>
+				{/* sidebar header (and menu) */}
+				<SidebarHeader
+					desktop={desktop}
+					setDrawerOpen={setDrawerOpen}
+				/>
+				{/* feature cards */}
+				<Container sx={{ marginTop: "24px" }}>
+					<Grid
+						component="ul"
+						container
+						spacing={3}
+						paddingLeft="0"
+						sx={{}}>
+						{geojsonData.features.map((f: GeoJSON.Feature) => {
+							if (!f.properties) return null;
+							return (
+								<Grid
+									component="li"
+									item
+									key={f.properties.id}
+									xs={12}>
+									<FeatureCard
+										feature={f}
+										// edit={cardFunctions.edit}
+										goTo={cardFunctions.goTo}
+										remove={cardFunctions.remove}
+									/>
+								</Grid>
+							);
+						})}
+					</Grid>
+				</Container>
+        <SidebarFooter
+          load={loadNewData}
+          save={save}
+        />
+			</>
+		);
+	}
+
+	if (desktop) {
+		return (
+			// desktop sidebar
+			<Grid
+				component="aside"
+				item
+				maxHeight="100vh"
+				position="relative"
+				xs={12}
+				md={4}
+				lg={3}
 				sx={{
-					bgcolor: "grey.900",
-					display: "flex",
-					justifyContent: "space-between",
-					position: "sticky",
-					top: 0,
-				}}
-			>
-				<Typography component='h1' variant='h5'>
-					Title
-				</Typography>
-        <SharingSwitch geojsonData={geojsonData} />
-			</Toolbar>
-			<Container sx={{ marginTop: "24px" }}>
-				<Grid component='ul' container spacing={3} paddingLeft='0' sx={{}}>
-					{geojsonData.features.map((f: GeoJSON.Feature, i) => {
-						// console.log(f.properties);
-						if (!f.properties) return null;
-						return (
-							<Grid component='li' item key={f.properties.id} xs={12}>
-								<FeatureCard featureData={f} {...featureCardFunctions} />
-							</Grid>
-						);
-					})}
-				</Grid>
-			</Container>
-			{/* <Container>
-				<a target="_blank" href="https://icons8.com/icon/92345/drop-of-blood">
-					Blood
-				</a>{" "}
-				icon by{" "}
-				<a target="_blank" href="https://icons8.com">
-					Icons8
-				</a>
-			</Container> */}
-		</Grid>
-	);
+					overflowY: "scroll",
+					display: {
+						xs: "none",
+						md: "block",
+					},
+				}}>
+				<SidebarContent />
+			</Grid>
+		);
+	} else {
+		return (
+			// mobile sidebar
+			<>
+				{/* Open Sidebar */}
+				<Tooltip title="Open feature list">
+					<Button
+						onClick={() => setDrawerOpen(true)}
+						variant="contained"
+						sx={{
+							opacity: 0.9,
+							display: {
+								xs: "inline-flex",
+								md: "none",
+							},
+							minWidth: "auto",
+							p: 1,
+							position: "absolute",
+							right: 0,
+							top: "50%",
+							translate: "-50%",
+						}}>
+						<ViewListIcon />
+					</Button>
+				</Tooltip>
+
+				<SwipeableDrawer
+					anchor="right"
+					onClose={() => setDrawerOpen(false)}
+					onOpen={() => setDrawerOpen(true)}
+					open={drawerOpen}
+					transitionDuration={350}>
+					<Box position="relative" width="350px">
+						<SidebarContent />
+						<SidebarFooter load={loadNewData} save={save}/>
+					</Box>
+				</SwipeableDrawer>
+				{/* <Tooltip title='Back to map'>
+					<Button
+						onClick={() => setDrawerOpen(false)}
+						variant='contained'
+						sx={{
+							// px: 1,
+							opacity: 0.9,
+							display: {
+								xs: drawerOpen ? "inline-flex" : "none",
+								md: "none",
+							},
+							minWidth: "auto",
+							p: 1,
+							position: "absolute",
+							left: 0,
+							top: "50%",
+							translate: "-50%",
+						}}
+					>
+						<MapIcon />
+					</Button>
+				</Tooltip> */}
+			</>
+		);
+	}
 }

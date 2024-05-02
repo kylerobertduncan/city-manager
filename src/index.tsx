@@ -4,23 +4,31 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import CssBaseline from "@mui/material/CssBaseline";
 import { ThemeProvider } from "@mui/material/styles";
 import theme from "./theme";
+// local components & routes
 import App from "./App";
 import ErrorPage from "./routes/Error";
+import Root from "./routes/Root";
 import SharedMap, { shareLoader } from "./routes/SharedMap";
+// reporting (delete?)
 import reportWebVitals from "./reportWebVitals";
 
 const router = createBrowserRouter([
 	{
-		path: "/",
+		path: "/oldApp",
 		element: <App />,
-    errorElement: <ErrorPage />,
+		errorElement: <ErrorPage />,
 	},
-  {
-    path: "/share/:sharingID",
-    element: <SharedMap />,
-    errorElement: <ErrorPage />,
-    loader: shareLoader,
-  },
+	{
+		path: "/",
+		element: <Root />,
+		errorElement: <ErrorPage />,
+	},
+	{
+		path: "/share/:sharingID",
+		element: <SharedMap />,
+		errorElement: <ErrorPage />,
+		loader: shareLoader,
+	},
 ]);
 
 const root = ReactDOM.createRoot(
@@ -28,9 +36,9 @@ const root = ReactDOM.createRoot(
 );
 root.render(
 	<React.StrictMode>
-		<ThemeProvider theme={theme}>
-			<CssBaseline />
-      <RouterProvider router={router}/>
+    <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <RouterProvider router={router}/>
 		</ThemeProvider>
 	</React.StrictMode>
 );
