@@ -12,7 +12,6 @@ import {
   liveLineSource,
   liveLineLayer
 } from "../variables";
-import { Coronavirus, PollOutlined } from "@mui/icons-material";
 
 // add url restrictions before releasing production
 // https://docs.mapbox.com/accounts/guides/tokens/#url-restrictions
@@ -288,7 +287,7 @@ export class MapController {
 	}
 
 	setupLivelineSource(polygonCoordinates: GeoJSON.Position[]) {
-		console.log("setupLiveLineSource fires");
+		// console.log("setupLiveLineSource fires");
 		if (this.liveLine.first === null) this.updateLiveLineFixedPoints(polygonCoordinates);
 		this.addNewSource(
 			{
@@ -305,7 +304,7 @@ export class MapController {
 	}
 
 	setupLivelineLayer() {
-		console.log("setupLiveLineLayer fires");
+		// console.log("setupLiveLineLayer fires");
 		if (!this.mapbox.getSource(liveLineSource)) return;
 		if (!this.mapbox.getLayer(liveLineLayer)) {
 			this.mapbox.addLayer({
@@ -319,16 +318,17 @@ export class MapController {
 		}
 	}
 
-	updateLivelineSource(e: mapboxgl.EventData) {
-		console.log("updateLiveLineSource fires");
-		const s = this.mapbox.getSource(liveLineSource) as mapboxgl.GeoJSONSource;
-		if (!s) return;
-		s.setData({
+  updateLivelineSource(e: mapboxgl.EventData) {
+    if (!this.liveLine.first) return;
+    const s = this.mapbox.getSource(liveLineSource) as mapboxgl.GeoJSONSource;
+    if (!s) return;
+    const coordinates = this.liveLine.last ? [this.liveLine.first, [e.lngLat.lng, e.lngLat.lat], this.liveLine.last] : [this.liveLine.first, [e.lngLat.lng, e.lngLat.lat]];
+    s.setData({
 			type: "Feature",
 			properties: {},
 			geometry: {
 				type: "LineString",
-				coordinates: [this.liveLine.first!, [e.lngLat.lng, e.lngLat.lat], this.liveLine.last ? this.liveLine.last : null!],
+				coordinates: coordinates,
 			},
 		});
 	}
@@ -338,7 +338,22 @@ export class MapController {
 			first: null,
 			last: null,
 		};
-	}
+  }
+  
+  clearLiveLine() {
+    // console.log("clearLiveLine fires");
+		const s = this.mapbox.getSource(liveLineSource) as mapboxgl.GeoJSONSource;
+		if (!s) return;
+		s.setData({
+			type: "Feature",
+			properties: {},
+			geometry: {
+				type: "LineString",
+				coordinates: [],
+			},
+    });
+    this.resetLiveLineFixedPoints();
+  }
 
 	updateLiveLineFixedPoints(polygonCoordinates: GeoJSON.Position[]) {
 		if (!polygonCoordinates.length) return;
@@ -348,21 +363,8 @@ export class MapController {
     }
 	}
 
-  // updateLiveLineMousePoint(e: mapboxgl.EventData) {
-  //   const s = this.mapbox.getSource(liveLineSource) as mapboxgl.GeoJSONSource;
-	// 	if (!s) return;
-	// 	s.setData({
-	// 		type: "Feature",
-	// 		properties: {},
-	// 		geometry: {
-	// 			type: "LineString",
-	// 			coordinates: [this.liveLine.first!, [e.lngLat.lng, e.lngLat.lat], this.liveLine.last ? this.liveLine.last : null!],
-	// 		},
-	// 	});
-  // };
-
 	calculateLiveLineCoordinates(cursorLngLat: GeoJSON.Position | null, polygonCoordinates: GeoJSON.Position[]) {
-		console.log("calculateLiveLineCoordinates fires");
+		// console.log("calculateLiveLineCoordinates fires");
 		const p = polygonCoordinates.slice(-1);
 		// const lastPoint: GeoJSON.Position = [...p[0]];
 		const coordinates: GeoJSON.Position[] = [p[0]];
@@ -375,8 +377,5 @@ export class MapController {
 			coordinates.push(p[0]);
 			return coordinates;
 		}
-		// if (polygonCoordinates.length === 1) return [lastPoint, cursorLngLat];
-		// else if (polygonCoordinates.length > 1) return [lastPoint, cursorLngLat, polygonCoordinates[0]];
-		// else return [lastPoint, lastPoint];
 	}
 }
