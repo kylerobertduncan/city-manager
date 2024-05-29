@@ -159,6 +159,7 @@ export default function Root() {
         cardFunctions={cardFunctions}
         geojsonData={geojsonData}
         loadNewData={loadNewData}
+        removeAll={handleRemoveAll}
 				map={map.current}
 			/>
 			{/* dialog(s) */}

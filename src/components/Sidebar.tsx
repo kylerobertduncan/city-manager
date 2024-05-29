@@ -21,7 +21,8 @@ import { saveCurrentData } from "../fileManager";
 export default function Sidebar({
 	cardFunctions,
 	geojsonData,
-	loadNewData,
+  loadNewData,
+  removeAll,
 	map,
 }: {
 	cardFunctions: {
@@ -30,7 +31,8 @@ export default function Sidebar({
 		remove: (uuid: string) => void;
 	};
 	geojsonData: GeoJSON.FeatureCollection;
-	loadNewData: (newGeojsonData: GeoJSON.FeatureCollection) => void;
+  loadNewData: (newGeojsonData: GeoJSON.FeatureCollection) => void;
+  removeAll: () => void;
 	map: MapController;
 }) {
 	// establish screen size
@@ -82,6 +84,7 @@ export default function Sidebar({
         <SidebarFooter
           load={loadNewData}
           save={save}
+          removeAll={removeAll}
         />
 			</>
 		);
@@ -99,11 +102,11 @@ export default function Sidebar({
 				md={4}
 				lg={3}
 				sx={{
-					overflowY: "scroll",
 					display: {
 						xs: "none",
 						md: "block",
-					},
+          },
+          overflowY: "scroll",
 				}}>
 				<SidebarContent />
 			</Grid>
@@ -133,7 +136,6 @@ export default function Sidebar({
 						<ViewListIcon />
 					</Button>
 				</Tooltip>
-
 				<SwipeableDrawer
 					anchor="right"
 					onClose={() => setDrawerOpen(false)}
@@ -142,31 +144,8 @@ export default function Sidebar({
 					transitionDuration={350}>
 					<Box position="relative" width="350px">
 						<SidebarContent />
-						<SidebarFooter load={loadNewData} save={save}/>
 					</Box>
 				</SwipeableDrawer>
-				{/* <Tooltip title='Back to map'>
-					<Button
-						onClick={() => setDrawerOpen(false)}
-						variant='contained'
-						sx={{
-							// px: 1,
-							opacity: 0.9,
-							display: {
-								xs: drawerOpen ? "inline-flex" : "none",
-								md: "none",
-							},
-							minWidth: "auto",
-							p: 1,
-							position: "absolute",
-							left: 0,
-							top: "50%",
-							translate: "-50%",
-						}}
-					>
-						<MapIcon />
-					</Button>
-				</Tooltip> */}
 			</>
 		);
 	}

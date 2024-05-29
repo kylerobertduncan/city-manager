@@ -71,7 +71,7 @@ export default function SidebarHeader({ desktop, setDrawerOpen }: { desktop: boo
 			</Typography>
 			{desktop ? null : (
 				<Tooltip title='Back to map'>
-					<Button onClick={() => setDrawerOpen(false)} variant='contained' sx={{ minWidth: "auto", px: 1 }}>
+					<Button onClick={() => setDrawerOpen(false)} variant='contained' sx={{ mr:1, minWidth: "auto", px: 1 }}>
 						<MapIcon />
 					</Button>
 				</Tooltip>
