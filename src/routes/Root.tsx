@@ -60,9 +60,9 @@ export default function Root() {
 		// update localStorage
 		setLocalStorage(geojsonData);
 		// update mapbox source data
-    if (map.current) map.current.updateSource(geojsonData);
-    console.debug("geojsonData updated:", geojsonData);
-  }, [geojsonData]);
+		if (map.current) map.current.updateSource(geojsonData);
+		console.debug("geojsonData updated:", geojsonData);
+	}, [geojsonData]);
 
   /* geojson handlers */
 
@@ -152,7 +152,7 @@ export default function Root() {
 					ref={mapContainer}
 				/>
 				{/* toolbar */}
-        <Toolbar handleAddFeature={handleAddFeature} handleRemoveAll={handleRemoveAll} map={map.current} />
+        <Toolbar handleAddFeature={handleAddFeature} map={map.current} />
 			</Grid>
 			{/* sidebar */}
       <Sidebar

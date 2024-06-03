@@ -15,9 +15,8 @@ import { useCallback, useEffect, useState } from "react";
 import { MapController } from "../modules/mapController";
 import FeatureDialog from "./NewFeatureDialog";
 
-export default function Toolbar({ handleAddFeature, handleRemoveAll, map }: {
+export default function Toolbar({ handleAddFeature, map }: {
   handleAddFeature: (newFeature: GeoJSON.Feature) => void,
-  handleRemoveAll: () => void,
   map: MapController
 }) {
 	const [activeTool, setActiveTool] = useState("select");
@@ -134,10 +133,6 @@ export default function Toolbar({ handleAddFeature, handleRemoveAll, map }: {
 			map.pointerCursor();
 			addPolygonListener();
 		}
-		if (tool === "removeAll") {
-			handleRemoveAll();
-			setActiveTool("select");
-		}
 		if (tool === "select") map.defaultCursor();
 	}
 
@@ -152,10 +147,8 @@ export default function Toolbar({ handleAddFeature, handleRemoveAll, map }: {
 			<ToggleButtonGroup
 				aria-label="Select active tool"
 				exclusive
-				// onChange={(_, v) => setActiveTool(v)}
 				onChange={handleActiveTool}
 				onKeyDown={handleKeyDown}
-				// size={xs:"small"; md: "medium"}
 				value={activeTool}
 				sx={{
 					// add a bgcolor/fill?
@@ -197,13 +190,6 @@ export default function Toolbar({ handleAddFeature, handleRemoveAll, map }: {
 						aria-label=""
 						value={"route"}>
 						<RouteIcon />
-					</ToggleButton>
-				</Tooltip>
-				<Tooltip title="Delete All Features">
-					<ToggleButton
-						aria-label=""
-						value={"removeAll"}>
-						<DeleteForeverIcon />
 					</ToggleButton>
 				</Tooltip>
 			</ToggleButtonGroup>
