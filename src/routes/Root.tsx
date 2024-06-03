@@ -113,7 +113,8 @@ export default function Root() {
 		// clear localStorage
 		setLocalStorage(emptyFeatureCollection);
 		// clear mapbox source data
-		map.current.updateSource(emptyFeatureCollection);
+    map.current.clearAllPopups();
+    map.current.updateSource(emptyFeatureCollection);
   }
 
   /* load/save handlers */
@@ -125,7 +126,6 @@ export default function Root() {
   }
 
   // function bundles for props
-
   const cardFunctions = {
     edit: handleEditFeature,
     goTo: map.current ? map.current.goToWithPopup : null,

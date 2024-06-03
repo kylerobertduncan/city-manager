@@ -13,6 +13,8 @@ import {
   liveLineLayer
 } from "../variables";
 
+import MapboxPopup from "../components/MapboxPopup";
+
 // add url restrictions before releasing production
 // https://docs.mapbox.com/accounts/guides/tokens/#url-restrictions
 mapboxgl.accessToken = process.env.REACT_APP_MAPBOX_API_KEY as string;
@@ -222,13 +224,21 @@ export class MapController {
 	}
 
 	showFeaturePopup(properties: mapboxgl.EventData) {
-		if (!properties) return;
-		// close other popups? multiple can be opened from sidebar
-		// if (this.popups.length) this.popups.forEach((popup) => popup.remove());
+    if (!properties) return;
+    console.log(properties);
+    const popupHtml = MapboxPopup(properties as featureProperties);
+    console.log(popupHtml);
+    const container = document.createElement("div");
+    
+    
 		this.clearAllPopups();
 		const lngLat = typeof properties.center == "string" ? JSON.parse(properties.center) : properties.center;
 		const popup = new mapboxgl.Popup({ anchor: "left" });
-		popup.setLngLat(lngLat).setHTML(`<h2 style="color:black;">${properties.name}</h2>`).setMaxWidth("300px").addTo(this.mapbox);
+    popup.setLngLat(lngLat)
+      .setHTML(`<h2 style="color:black;">${properties.name}</h2>`)
+      // .setDOMContent()
+      .setMaxWidth("300px")
+      .addTo(this.mapbox);
 		this.popups.push(popup);
 	}
 
@@ -239,7 +249,7 @@ export class MapController {
 
 	clearAllPopups() {
 		if (this.popups.length) this.popups.forEach((popup) => popup.remove());
-	}
+  }
 
 	setupNewPolygonSource(polygonCoordinates: GeoJSON.Position[]) {
 		const data = { ...newPolygonFeatureCollection };
