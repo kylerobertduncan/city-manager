@@ -86,12 +86,8 @@ export default function Root() {
   function handleEditFeature(updatedFeature: GeoJSON.Feature) {
     const updatedData = { ...geojsonData };
 		updatedData.features = geojsonData.features.map((f) => {
-			if (f.properties!.id !== updatedFeature.properties!.id) return f;
-			else {
-				const updatedFeature = { ...f };
-				updatedFeature.properties = { ...updatedFeature.properties };
-				return updatedFeature;
-			}
+      if (f.properties!.id !== updatedFeature.properties!.id) return f;
+      else return updatedFeature;
     });
     setGeojsonData(updatedData);
   }
@@ -127,9 +123,9 @@ export default function Root() {
 
   // function bundles for props
   const cardFunctions = {
-    edit: handleEditFeature,
     goTo: map.current ? map.current.goToWithPopup : null,
-    remove: handleRemoveFeature,
+    handleEdit: handleEditFeature,
+    handleRemove: handleRemoveFeature,
   }
   
   return (

@@ -1,6 +1,5 @@
 import mapboxgl from "mapbox-gl";
 // import material ui icons
-import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import ExploreIcon from "@mui/icons-material/Explore";
 // better icon for selecting?
 import PlaceIcon from "@mui/icons-material/Place";

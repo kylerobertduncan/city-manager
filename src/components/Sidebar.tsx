@@ -15,7 +15,6 @@ import SidebarHeader from "./SidebarHeader";
 import SidebarFooter from "./SidebarFooter";
 // local modules
 import { MapController } from "../modules/mapController";
-
 import { saveCurrentData } from "../fileManager";
 
 export default function Sidebar({
@@ -26,9 +25,9 @@ export default function Sidebar({
 	map,
 }: {
 	cardFunctions: {
-		edit: (feature: GeoJSON.Feature) => void;
 		goTo: (properties: mapboxgl.EventData) => void;
-		remove: (uuid: string) => void;
+		handleEdit: (feature: GeoJSON.Feature) => void;
+		handleRemove: (uuid: string) => void;
 	};
 	geojsonData: GeoJSON.FeatureCollection;
   loadNewData: (newGeojsonData: GeoJSON.FeatureCollection) => void;
@@ -72,9 +71,9 @@ export default function Sidebar({
 									xs={12}>
 									<FeatureCard
 										feature={f}
-										// edit={cardFunctions.edit}
 										goTo={cardFunctions.goTo}
-										remove={cardFunctions.remove}
+										handleEdit={cardFunctions.handleEdit}
+										handleRemove={cardFunctions.handleRemove}
 									/>
 								</Grid>
 							);
