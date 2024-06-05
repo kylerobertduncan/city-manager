@@ -15,7 +15,17 @@ import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { useState } from "react";
 import FeatureDialog from "../components/EditFeatureDialog";
 
-export default function FeatureCard({ feature, handleEdit, goTo, handleRemove }: { feature: GeoJSON.Feature; goTo: (properties: mapboxgl.EventData) => void; handleEdit: (feature: GeoJSON.Feature) => void; handleRemove: (uuid: string) => void }) {
+export default function FeatureCard({
+  feature,
+  handleEdit,
+  goTo,
+  handleRemove
+}: {
+  feature: GeoJSON.Feature;
+  goTo: (properties: mapboxgl.EventData) => void;
+  handleEdit: (feature: GeoJSON.Feature) => void;
+  handleRemove: (uuid: string) => void
+}) {
 	const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 	const [dialogOpen, setDialogOpen] = useState(false);
 

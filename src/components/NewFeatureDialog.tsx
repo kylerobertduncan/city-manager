@@ -11,7 +11,17 @@ import { useState } from "react";
 import { v4 as uuid } from "uuid";
 import { featureProperties, emptyFeatureProperties } from "../variables";
 
-export default function FeatureDialog({ geometry, handleAddFeature, handleCloseDialog, isOpen }: { geometry: GeoJSON.Point | GeoJSON.Polygon; handleAddFeature: (newFeature: GeoJSON.Feature) => void; handleCloseDialog: () => void; isOpen: boolean; }) {
+export default function FeatureDialog({
+  geometry,
+  handleAddFeature,
+  handleCloseDialog,
+  isOpen
+}: {
+  geometry: GeoJSON.Point | GeoJSON.Polygon;
+  handleAddFeature: (newFeature: GeoJSON.Feature) => void;
+  handleCloseDialog: () => void;
+  isOpen: boolean;
+}) {
 	const [properties, setProperties] = useState<featureProperties>(emptyFeatureProperties);
 
 	const updateProperties = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -86,9 +96,15 @@ export default function FeatureDialog({ geometry, handleAddFeature, handleCloseD
 					onChange={updateProperties}
 				/>
 				<MuiColorInput
+					margin="dense"
+					id="color"
+					name="color"
+					label="Color"
+					fullWidth
 					onChange={updateColor}
 					format="hex"
-					value={properties.color ? properties.color : "#FF0000"}
+					value={properties.color ? properties.color : "#ff0000"}
+          fallbackValue="#ff0000"
 				/>
 			</DialogContent>
 			<DialogActions sx={{ justifyContent: "center", paddingBottom: 2 }}>

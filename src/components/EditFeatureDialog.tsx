@@ -87,9 +87,16 @@ export default function FeatureDialog({
 					onChange={updateProperties}
 				/>
 				<MuiColorInput
+          isAlphaHidden
+					margin="dense"
+					id="color"
+					name="color"
+					label="Color"
+					fullWidth
 					onChange={updateColor}
 					format="hex"
-					value={properties.color ? properties.color : "#FF0000"}
+					value={properties.color ? properties.color : "#ff0000"}
+          fallbackValue="#ff00000"
 				/>
 			</DialogContent>
 			<DialogActions sx={{ justifyContent: "center", paddingBottom: 2 }}>
