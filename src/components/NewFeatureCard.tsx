@@ -4,6 +4,8 @@ import CardHeader from "@mui/material/CardHeader";
 import IconButton from "@mui/material/IconButton";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
+import Chip from '@mui/material/Chip';
+import Stack from '@mui/material/Stack';
 import Typography from "@mui/material/Typography";
 // import feature type icons
 import PlaceIcon from "@mui/icons-material/Place";
@@ -66,6 +68,15 @@ export default function FeatureCard({
 					<Typography gutterBottom>{tags ? tags : "Tags"}</Typography>
 					{/* Add collapse to show/hide notes and other details */}
 					<Typography variant="body2">{notes ? notes : "Notes"}</Typography>
+          {
+            !feature.properties.chips ?
+            null :
+            feature.properties.chips.length ?
+              <Stack direction="row">
+                { feature.properties.chips.map((m:string) => <Chip label={m} />) }
+              </Stack>
+            : null
+          }
 				</CardContent>
 				<Menu
 					anchorEl={anchorEl}

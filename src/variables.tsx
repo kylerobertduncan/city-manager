@@ -26,6 +26,7 @@ export interface featureProperties {
 	address?: string;
 	bbox?: number[];
 	center?: number[];
+  chips?: string[];
 	color?: string;
 	created: number;
 	id: string;

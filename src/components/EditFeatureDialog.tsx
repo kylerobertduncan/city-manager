@@ -8,7 +8,7 @@ import DialogTitle from "@mui/material/DialogTitle";
 import TextField from "@mui/material/TextField";
 import { MuiColorInput } from "mui-color-input";
 import { useState } from "react";
-import { featureProperties, emptyFeatureProperties } from "../variables";
+import { featureProperties } from "../variables";
 
 export default function FeatureDialog({
   feature,
