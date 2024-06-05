@@ -1,38 +1,33 @@
-import Card from '@mui/material/Card';
-import CardContent from '@mui/material/CardContent';
-import CardHeader from '@mui/material/CardHeader';
-import IconButton from '@mui/material/IconButton';
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import CardHeader from "@mui/material/CardHeader";
+import IconButton from "@mui/material/IconButton";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
-import Typography from '@mui/material/Typography';
+import Typography from "@mui/material/Typography";
 // import feature type icons
-import PlaceIcon from '@mui/icons-material/Place';
-import PolylineIcon from '@mui/icons-material/Polyline';
+import PlaceIcon from "@mui/icons-material/Place";
+import PolylineIcon from "@mui/icons-material/Polyline";
 // import action button icons
-import DeleteIcon from '@mui/icons-material/Delete';
-import EditIcon from '@mui/icons-material/Edit';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
-import { useState } from 'react';
+import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from "@mui/icons-material/Edit";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
+import { useState } from "react";
 import FeatureDialog from "../components/EditFeatureDialog";
 
-export default function FeatureCard({ feature, handleEdit, goTo, handleRemove }: {
-  feature: GeoJSON.Feature;
-  goTo: (properties: mapboxgl.EventData) => void;
-  handleEdit: (feature: GeoJSON.Feature) => void;
-  handleRemove: (uuid: string) => void;
-}) {
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  
+export default function FeatureCard({ feature, handleEdit, goTo, handleRemove }: { feature: GeoJSON.Feature; goTo: (properties: mapboxgl.EventData) => void; handleEdit: (feature: GeoJSON.Feature) => void; handleRemove: (uuid: string) => void }) {
+	const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+	const [dialogOpen, setDialogOpen] = useState(false);
+
 	if (!feature.properties) return null;
-	
-  const { address, name, notes, tags } = feature.properties;
-  // menu setup
-  const menuOpen = Boolean(anchorEl);
-  const handleOpenMenu = (e:React.MouseEvent<HTMLButtonElement>) => setAnchorEl(e.currentTarget);
-  const handleCloseMenu = () => setAnchorEl(null);
-  
-  return (
+
+	const { address, color, name, notes, tags } = feature.properties;
+	// menu setup
+	const menuOpen = Boolean(anchorEl);
+	const handleOpenMenu = (e: React.MouseEvent<HTMLButtonElement>) => setAnchorEl(e.currentTarget);
+	const handleCloseMenu = () => setAnchorEl(null);
+
+	return (
 		<>
 			<Card raised>
 				<CardHeader
@@ -40,7 +35,8 @@ export default function FeatureCard({ feature, handleEdit, goTo, handleRemove }:
 						<IconButton
 							aria-label="View feature on map"
 							onClick={() => goTo(feature.properties!)}
-							size="small">
+							size="small"
+							sx={{ color: color }}>
 							{feature.geometry.type === "Point" ? <PlaceIcon /> : <PolylineIcon />}
 						</IconButton>
 					}

@@ -6,6 +6,7 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
 import TextField from "@mui/material/TextField";
+import { MuiColorInput } from "mui-color-input";
 import { useState } from "react";
 import { featureProperties, emptyFeatureProperties } from "../variables";
 
@@ -28,7 +29,12 @@ export default function FeatureDialog({
 			...properties,
 			[e.target.name]: e.target.value,
 		});
-	};
+  };
+  
+  const updateColor = (updatedColor: string) => setProperties({
+    ...properties,
+    color: updatedColor
+  });
 
 	function closeDialog() {
 		// setProperties(emptyFeatureProperties);
@@ -79,6 +85,11 @@ export default function FeatureDialog({
 					minRows={3}
 					value={properties.notes}
 					onChange={updateProperties}
+				/>
+				<MuiColorInput
+					onChange={updateColor}
+					format="hex"
+					value={properties.color ? properties.color : "#FF0000"}
 				/>
 			</DialogContent>
 			<DialogActions sx={{ justifyContent: "center", paddingBottom: 2 }}>

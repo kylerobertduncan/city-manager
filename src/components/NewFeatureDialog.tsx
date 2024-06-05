@@ -5,6 +5,7 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
+import { MuiColorInput } from "mui-color-input";
 import TextField from "@mui/material/TextField";
 import { useState } from "react";
 import { v4 as uuid } from "uuid";
@@ -19,6 +20,12 @@ export default function FeatureDialog({ geometry, handleAddFeature, handleCloseD
 			[e.target.name]: e.target.value,
 		});
   };
+
+  const updateColor = (updatedColor: string) =>
+		setProperties({
+			...properties,
+			color: updatedColor,
+		});
   
   function closeDialog() {
     setProperties(emptyFeatureProperties);
@@ -77,6 +84,11 @@ export default function FeatureDialog({ geometry, handleAddFeature, handleCloseD
 					minRows={3}
 					value={properties.notes}
 					onChange={updateProperties}
+				/>
+				<MuiColorInput
+					onChange={updateColor}
+					format="hex"
+					value={properties.color ? properties.color : "#FF0000"}
 				/>
 			</DialogContent>
 			<DialogActions sx={{ justifyContent: "center", paddingBottom: 2 }}>

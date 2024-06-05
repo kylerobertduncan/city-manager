@@ -101,7 +101,7 @@ export class MapController {
 				source: mapboxSourceId,
 				type: "fill",
 				paint: {
-					"fill-color": "red",
+					"fill-color": ["case", ["!=", ["get", "color"], ""], ["get", "color"], "red"],
 					"fill-opacity": 0.5,
 				},
 			},
@@ -134,7 +134,7 @@ export class MapController {
 				source: mapboxSourceId,
 				type: "circle",
 				paint: {
-					"circle-color": "red",
+					"circle-color": ["case", ["!=", ["get", "color"], ""], ["get", "color"], "red"],
 					"circle-opacity": 0.5,
 					"circle-radius": 10,
 					"circle-stroke-color": "white",
