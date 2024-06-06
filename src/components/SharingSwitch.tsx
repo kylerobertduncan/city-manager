@@ -2,9 +2,11 @@ import { ChangeEvent, useState } from "react";
 import { addDoc, collection, doc, deleteDoc } from "firebase/firestore";
 import { v4 as uuid } from "uuid";
 
-import FormGroup from "@mui/material/FormGroup";
-import FormControlLabel from "@mui/material/FormControlLabel";
+import Button from "@mui/material/Button";
+import ShareIcon from "@mui/icons-material/Share";
+// import IosShareIcon from "@mui/icons-material/IosShare";
 import Switch from "@mui/material/Switch";
+import Tooltip from "@mui/material/Tooltip";
 
 import { db } from "../firestore";
 
@@ -27,7 +29,7 @@ export default function SharingSwitch({geojsonData}:{geojsonData:GeoJSON.Feature
 					geojson: JSON.stringify(geojsonData),
 					uuid: uuid(),
         });
-        console.log("document written with ID:", docRef.id);
+        console.debug("document written with ID:", docRef.id);
 				setSharingID(docRef.id);
 				setShareDialogOpen(true);
 			} catch (e) {
@@ -57,9 +59,22 @@ export default function SharingSwitch({geojsonData}:{geojsonData:GeoJSON.Feature
 
 	return (
 		<>
-			<FormGroup>
-				<FormControlLabel control={<Switch checked={sharing} onChange={handleChange} inputProps={{ "aria-label": "controlled" }} />} label='Share Map' labelPlacement='start' />
-			</FormGroup>
+      <Tooltip title="Get Sharing Link">
+        <Button
+          // onClick={save}
+          variant="contained"
+          sx={{
+            minWidth: "auto",
+            p: 1,
+          }}>
+          <ShareIcon />
+        </Button>
+      </Tooltip>
+      <Tooltip title="Turn Sharing On/Off">
+        <Switch
+        checked={sharing} onChange={handleChange} inputProps={{ "aria-label": "controlled" }}
+        />
+      </Tooltip>
 			{/* Share Map Dialog */}
 			<ShareDialog closeDialog={() => setShareDialogOpen(false)} isOpen={shareDialogOpen} sharingID={sharingID} />
 		</>

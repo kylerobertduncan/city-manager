@@ -81,6 +81,7 @@ export default function Sidebar({
 					</Grid>
 				</Container>
         <SidebarFooter
+          geojsonData={geojsonData}
           load={loadNewData}
           save={save}
           removeAll={removeAll}

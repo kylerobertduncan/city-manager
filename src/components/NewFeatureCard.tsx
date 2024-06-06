@@ -74,7 +74,7 @@ export default function FeatureCard({
             null :
             tags.length ?
               <Stack direction="row" mt={2} spacing={1} sx={{ overflowX:"scroll" }}>
-                { tags.map((m:string) => <Chip label={m} />) }
+                { tags.map((m:string) => <Chip key={m} label={m} />) }
               </Stack>
             : null
           }

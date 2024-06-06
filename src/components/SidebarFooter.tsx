@@ -11,8 +11,19 @@ import ShareIcon from "@mui/icons-material/Share";
 // import IosShareIcon from "@mui/icons-material/IosShare";
 
 import { LoadNewData } from "../fileManager";
+import SharingSwitch from "./SharingSwitch";
 
-export default function SidebarFooter({ save, load, removeAll }: { save: () => void; load: (newGeojsonData: GeoJSON.FeatureCollection) => void; removeAll: () => void; }) {
+export default function SidebarFooter({
+  geojsonData,
+  save,
+  load,
+  removeAll
+}: {
+  geojsonData: GeoJSON.FeatureCollection;
+  save: () => void;
+  load: (newGeojsonData: GeoJSON.FeatureCollection) => void;
+  removeAll: () => void;
+}) {
 	return (
 		<Toolbar
 			sx={{
@@ -38,7 +49,7 @@ export default function SidebarFooter({ save, load, removeAll }: { save: () => v
 						<DeleteForeverIcon />
 					</Button>
 				</Tooltip>
-				<Tooltip title="Save to disk">
+				<Tooltip title="Save To Disk">
 					<Button
 						onClick={save}
 						variant="contained"
@@ -49,7 +60,7 @@ export default function SidebarFooter({ save, load, removeAll }: { save: () => v
 						<SaveIcon />
 					</Button>
 				</Tooltip>
-				<Tooltip title="Load new data">
+				<Tooltip title="Load New Data">
 					<Button
 						component="label"
 						role={undefined}
@@ -63,18 +74,7 @@ export default function SidebarFooter({ save, load, removeAll }: { save: () => v
 						<LoadNewData onImport={load} />
 					</Button>
 				</Tooltip>
-				<Tooltip title="Share Map">
-					<Button
-						// onClick={save}
-						variant="contained"
-						sx={{
-							minWidth: "auto",
-							p: 1,
-						}}>
-						<ShareIcon />
-					</Button>
-				</Tooltip>
-				{/* <SharingSwitch geojsonData={geojsonData} /> */}
+        <SharingSwitch geojsonData={geojsonData} />
 			</Stack>
 		</Toolbar>
 	);
