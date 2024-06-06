@@ -22,17 +22,37 @@ export const liveLineSource: string = "prxs-liveLine-source";
 export const liveLineLayer: string = "prxs-liveLine-layer";
 // maybe add a point layer as well?
 
+export const featureTags = [
+  "Anarch",
+  "Camarilla",
+  "Independent",
+  "Banu Haqim",
+  "Brujah",
+  "Gangrel",
+  "Hecata",
+  "Lasombra",
+  "Malkavian",
+  "The Ministry",
+  "Nosferatu",
+  "Ravnos",
+  "Salubri",
+  "Toreador",
+  "Tremere",
+  "Tzimisce",
+  "Ventrue",
+];
+
 export interface featureProperties {
 	address?: string;
 	bbox?: number[];
 	center?: number[];
-  chips?: string[];
+  tags?: string[];
 	color?: string;
 	created: number;
 	id: string;
 	name: string;
 	notes?: string; // maybe an array in future?
-	tags?: string; // maybe an array in future?
+	byline?: string; // maybe an array in future?
 }
 
 export interface firebaseData {
@@ -43,12 +63,13 @@ export interface firebaseData {
 
 export const emptyFeatureProperties:featureProperties = {
   address: "",
+  tags: [],
   color: "",
   created: 0,
   id: "",
   name: "",
   notes: "",
-  tags: "",
+  byline: "",
 }
 
 export const emptyFeatureCollection: GeoJSON.FeatureCollection = {

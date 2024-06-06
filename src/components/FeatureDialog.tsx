@@ -58,7 +58,7 @@ export default function FeatureDialog({
 					name="tags"
 					label="Tags"
 					fullWidth
-					value={featureProperties.tags}
+					value={featureProperties.byline}
 					onChange={(e) => updateProperties("tags", e.target.value)}
 				/>
 				<TextField

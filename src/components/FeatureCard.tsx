@@ -62,7 +62,7 @@ export default function FeatureCard({
 			/>
 			<CardContent>
 				{/* switch tags and address? */}
-				<Typography gutterBottom>{tags ? tags : "Tags"}</Typography>
+				{/* <Typography gutterBottom>{tags ? tags : "Tags"}</Typography> */}
 				{/* Add collapse to show/hide notes and other details */}
 				<Typography variant="body2">{notes ? notes : "Notes"}</Typography>
 			</CardContent>

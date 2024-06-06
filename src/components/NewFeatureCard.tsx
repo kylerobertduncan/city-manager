@@ -33,7 +33,7 @@ export default function FeatureCard({
 
 	if (!feature.properties) return null;
 
-	const { address, color, name, notes, tags } = feature.properties;
+	const { address, byline, color, name, notes, tags } = feature.properties;
 	// menu setup
 	const menuOpen = Boolean(anchorEl);
 	const handleOpenMenu = (e: React.MouseEvent<HTMLButtonElement>) => setAnchorEl(e.currentTarget);
@@ -65,18 +65,18 @@ export default function FeatureCard({
 				/>
 				<CardContent>
 					{/* switch tags and address? */}
-					<Typography gutterBottom>{tags ? tags : "Tags"}</Typography>
-					{/* Add collapse to show/hide notes and other details */}
-					<Typography variant="body2">{notes ? notes : "Notes"}</Typography>
           {
-            !feature.properties.chips ?
+            !feature.properties.tags ?
             null :
-            feature.properties.chips.length ?
-              <Stack direction="row">
-                { feature.properties.chips.map((m:string) => <Chip label={m} />) }
+            feature.properties.tags.length ?
+              <Stack direction="row" mb={1} spacing={1}>
+                { feature.properties.tags.map((m:string) => <Chip label={m} />) }
               </Stack>
             : null
           }
+					<Typography gutterBottom>{byline ? byline : "Tags"}</Typography>
+					{/* Add collapse to show/hide notes and other details */}
+					<Typography variant="body2">{notes ? notes : "Notes"}</Typography>
 				</CardContent>
 				<Menu
 					anchorEl={anchorEl}
