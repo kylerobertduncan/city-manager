@@ -54,7 +54,8 @@ export default function FeatureCard({
 					}
 					title={name ? name : "Location Name"}
 					titleTypographyProps={{ component: "h2", variant: "h5" }}
-					subheader={address ? address : "Subheader (address?) here"}
+					subheader={ address ? address : "333 Harbord Street, Toronto, ON" }
+          // subheaderTypographyProps={{ component: "h3", variant:"h6" }}
 					action={
 						<IconButton
 							aria-label="Options"
@@ -63,20 +64,20 @@ export default function FeatureCard({
 						</IconButton>
 					}
 				/>
-				<CardContent>
+				<CardContent sx={{ paddingTop:0 }}>
 					{/* switch tags and address? */}
+					{/* Add collapse to show/hide notes and other details */}
+					<Typography gutterBottom>{ byline ? byline : "Byline" }</Typography>
+					<Typography gutterBottom variant="body2">{notes ? notes : "Notes"}</Typography>
           {
-            !feature.properties.tags ?
+            !tags ?
             null :
-            feature.properties.tags.length ?
-              <Stack direction="row" mb={1} spacing={1}>
-                { feature.properties.tags.map((m:string) => <Chip label={m} />) }
+            tags.length ?
+              <Stack direction="row" mt={2} spacing={1} sx={{ overflowX:"scroll" }}>
+                { tags.map((m:string) => <Chip label={m} />) }
               </Stack>
             : null
           }
-					<Typography gutterBottom>{byline ? byline : "Tags"}</Typography>
-					{/* Add collapse to show/hide notes and other details */}
-					<Typography variant="body2">{notes ? notes : "Notes"}</Typography>
 				</CardContent>
 				<Menu
 					anchorEl={anchorEl}
@@ -94,16 +95,12 @@ export default function FeatureCard({
 					MenuListProps={{
 						"aria-labelledby": "feature-button",
 					}}>
-					{/* <MenuItem onClick={handleClose}>Profile</MenuItem>
-          <MenuItem onClick={handleClose}>My account</MenuItem>
-          <MenuItem onClick={handleClose}>Logout</MenuItem> */}
 					<MenuItem>
 						<IconButton
 							aria-label="Edit feature"
 							onClick={() => {
 								handleCloseMenu();
 								setDialogOpen(true);
-								// edit(feature);
 							}}
 							size="small">
 							<EditIcon />
