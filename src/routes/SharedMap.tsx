@@ -22,6 +22,7 @@ import {
 	mapboxSourceId,
 	mapboxPointLayerId,
 	mapboxPolygonLayerId,
+  prxsFile,
 } from "../variables";
 // import markerImg from "./assets/icons8-map-pin-48.png"
 import { db } from "../firestore";
@@ -47,11 +48,11 @@ export default function SharedMap() {
 	const [mapCenter, setMapCenter] = useState({ lng: -79.37, lat: 43.65 });
 	const [zoom, setZoom] = useState(12);
 	// setup state for local storage geojson object
-	const [geojsonData, setGeojsonData] = useState<GeoJSON.FeatureCollection>(emptyFeatureCollection);
+	const [geojsonData, setGeojsonData] = useState<prxsFile>(emptyFeatureCollection);
 
 	const { sharingID } = useLoaderData() as { sharingID: string };
 
-	console.log("sharing map at id:", sharingID);
+	console.debug("sharing map at id:", sharingID);
 
 	useEffect(() => {
     mapboxSetup();

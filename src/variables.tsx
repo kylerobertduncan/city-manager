@@ -42,6 +42,13 @@ export const featureTags = [
   "Ventrue",
 ];
 
+export interface prxsFile extends GeoJSON.FeatureCollection {
+  properties?: {
+    customFeatureTags?: string[];
+    lastSharedId?: string;
+  }
+}
+
 export interface featureProperties {
 	address?: string;
 	bbox?: number[];
@@ -72,7 +79,7 @@ export const emptyFeatureProperties:featureProperties = {
   byline: "",
 }
 
-export const emptyFeatureCollection: GeoJSON.FeatureCollection = {
+export const emptyFeatureCollection: prxsFile = {
 	type: "FeatureCollection",
 	features: [],
 };

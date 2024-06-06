@@ -16,23 +16,29 @@ import SidebarFooter from "./SidebarFooter";
 // local modules
 import { MapController } from "../modules/mapController";
 import { saveCurrentData } from "../fileManager";
+import { prxsFile } from "../variables";
 
 export default function Sidebar({
 	cardFunctions,
 	geojsonData,
   loadNewData,
-  removeAll,
 	map,
+  removeAll,
+  sharing,
 }: {
 	cardFunctions: {
 		goTo: (properties: mapboxgl.EventData) => void;
 		handleEdit: (feature: GeoJSON.Feature) => void;
 		handleRemove: (uuid: string) => void;
 	};
-	geojsonData: GeoJSON.FeatureCollection;
-  loadNewData: (newGeojsonData: GeoJSON.FeatureCollection) => void;
-  removeAll: () => void;
+	geojsonData: prxsFile;
+  loadNewData: (newGeojsonData: prxsFile) => void;
 	map: MapController;
+  removeAll: () => void;
+  sharing: {
+    active: boolean;
+    switch: () => void;
+  }
 }) {
 	// establish screen size
 	const theme = useTheme();
@@ -74,6 +80,7 @@ export default function Sidebar({
 										goTo={cardFunctions.goTo}
 										handleEdit={cardFunctions.handleEdit}
 										handleRemove={cardFunctions.handleRemove}
+                    shared={sharing.active}
 									/>
 								</Grid>
 							);

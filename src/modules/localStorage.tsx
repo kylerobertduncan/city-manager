@@ -1,4 +1,4 @@
-import { localStorageId } from "../variables";
+import { localStorageId, prxsFile } from "../variables";
 
 export function getLocalStorage() {
 	// get item from localStorage
@@ -8,14 +8,14 @@ export function getLocalStorage() {
 	// What if localStorage is lost (cache cleared) but data is still present in state? Worth preserving state?
 	try {
 		if (!item) throw new Error("No data found");
-		const data: GeoJSON.FeatureCollection = JSON.parse(item);
+		const data: prxsFile = JSON.parse(item);
     if (data) return data;
   } catch (error: any) {
     console.error("Error retrieving local storage data:", error.message);
   };
 }
 
-export function setLocalStorage(geojsonData:GeoJSON.FeatureCollection) {
+export function setLocalStorage(geojsonData:prxsFile) {
 	// convert current data to a string and update localStorage
 	try {
 		const s = JSON.stringify(geojsonData);

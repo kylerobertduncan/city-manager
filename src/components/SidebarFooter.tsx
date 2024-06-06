@@ -12,6 +12,7 @@ import ShareIcon from "@mui/icons-material/Share";
 
 import { LoadNewData } from "../fileManager";
 import SharingSwitch from "./SharingSwitch";
+import { prxsFile } from "../variables";
 
 export default function SidebarFooter({
   geojsonData,
@@ -19,9 +20,9 @@ export default function SidebarFooter({
   load,
   removeAll
 }: {
-  geojsonData: GeoJSON.FeatureCollection;
+  geojsonData: prxsFile;
   save: () => void;
-  load: (newGeojsonData: GeoJSON.FeatureCollection) => void;
+  load: (newGeojsonData: prxsFile) => void;
   removeAll: () => void;
 }) {
 	return (

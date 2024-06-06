@@ -1,7 +1,7 @@
 // import third party packages
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
-import { useEffect, useRef, useState } from 'react';
+import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { bbox, centerOfMass } from "@turf/turf";
 // import local components
 import Sidebar from '../components/Sidebar';
@@ -9,7 +9,7 @@ import Toolbar from '../components/Toolbar';
 // import other local elements
 import { getLocalStorage, setLocalStorage } from "../modules/localStorage";
 import { mapboxInit, MapController } from '../modules/mapController';
-import { emptyFeatureCollection } from '../variables';
+import { emptyFeatureCollection, prxsFile } from '../variables';
 
 export default function Root() {
 	// setup map controller,  object and container
@@ -21,13 +21,19 @@ export default function Root() {
 	const [zoom, setZoom] = useState(12);
 	// setup geojsonData in state
   const [geojsonData, setGeojsonData] = useState(emptyFeatureCollection);
+  // setup sharing state
+  const [isShared, setIsShared] = useState(false);
+  const switchIsShared = () => setIsShared(!isShared);
 
 	// setup mapbox on initial render
 	useEffect(mapboxSetup, []);
 
   function mapboxSetup() {
     const localData = getLocalStorage();
-    if (localData) setGeojsonData(localData);
+    if (localData) {
+      setGeojsonData(localData);
+      if (localData.properties?.lastSharedId && !isShared) switchIsShared();
+    }
     // if no map, initialise new map
 		if (!mapbox.current) mapbox.current = mapboxInit(center, mapContainer.current, setCenter, setZoom, zoom);
 		// if map not loaded, re-run when loaded
@@ -115,7 +121,7 @@ export default function Root() {
 
   /* load/save handlers */
 
-  function loadNewData(newGeojsonData: GeoJSON.FeatureCollection) {
+  function loadNewData(newGeojsonData: prxsFile) {
 		if (!window.confirm("Loading this data will overwrite any existing features. Are you sure you want to continue?")) return;
 		// find all popups and remove them!
 		setGeojsonData(newGeojsonData);
@@ -127,38 +133,44 @@ export default function Root() {
     handleEdit: handleEditFeature,
     handleRemove: handleRemoveFeature,
   }
+
+  const sharing = {
+    active: isShared,
+    switch: switchIsShared,
+  }
   
   return (
-		<Grid
-			container
-			className='App'>
-			{/* map Window */}
-			<Grid
-				component='main'
-				item
-				xs={12}
-				md={8}
-				lg={9}
-				sx={{ position: 'relative' }}>
-				{/* mapbox container */}
-				<Box
-					className='map-container'
-					component='div'
-					height='100dvh'
-					ref={mapContainer}
-				/>
-				{/* toolbar */}
-        <Toolbar handleAddFeature={handleAddFeature} map={map.current} />
-			</Grid>
-			{/* sidebar */}
+    <Grid
+      container
+      className='App'>
+      {/* map Window */}
+      <Grid
+        component='main'
+        item
+        xs={12}
+        md={8}
+        lg={9}
+        sx={{ position: 'relative' }}>
+        {/* mapbox container */}
+        <Box
+          className='map-container'
+          component='div'
+          height='100dvh'
+          ref={mapContainer}
+        />
+        {/* toolbar */}
+        { isShared ? null : <Toolbar handleAddFeature={handleAddFeature} map={map.current} /> }
+      </Grid>
+      {/* sidebar */}
       <Sidebar
         cardFunctions={cardFunctions}
         geojsonData={geojsonData}
         loadNewData={loadNewData}
+        map={map.current}
         removeAll={handleRemoveAll}
-				map={map.current}
-			/>
-			{/* dialog(s) */}
-		</Grid>
+        sharing={sharing}
+      />
+      {/* dialog(s) */}
+    </Grid>
 	);
 }

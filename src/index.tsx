@@ -8,7 +8,8 @@ import theme from "./theme";
 import App from "./App";
 import ErrorPage from "./routes/Error";
 import Root from "./routes/Root";
-import SharedMap, { shareLoader } from "./routes/SharedMap";
+// import SharedMap, { shareLoader } from "./routes/SharedMap";
+import SharedMap, { shareLoader } from "./routes/NewSharedMap";
 // reporting (delete?)
 import reportWebVitals from "./reportWebVitals";
 

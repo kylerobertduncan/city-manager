@@ -1,5 +1,6 @@
 import { ChangeEvent } from "react";
 import { styled } from "@mui/material/styles";
+import { prxsFile } from "./variables";
 
 const VisuallyHiddenInput = styled("input")({
 	clip: "rect(0 0 0 0)",
@@ -13,7 +14,7 @@ const VisuallyHiddenInput = styled("input")({
 	width: 1,
 });
 
-export function saveCurrentData(geojsonData: GeoJSON.FeatureCollection) {
+export function saveCurrentData(geojsonData: prxsFile) {
   const json = JSON.stringify(geojsonData);
 	const blob = new Blob([json], { type: "application/json" });
 	const url = URL.createObjectURL(blob);
@@ -28,7 +29,7 @@ export function saveCurrentData(geojsonData: GeoJSON.FeatureCollection) {
 	// document.body.removeChild(link);
 }
 
-export function LoadNewData({ onImport }: { onImport: (newData:GeoJSON.FeatureCollection) => void }) {
+export function LoadNewData({ onImport }: { onImport: (newData:prxsFile) => void }) {
   const handleNewFile = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;

@@ -21,12 +21,14 @@ export default function FeatureCard({
   feature,
   handleEdit,
   goTo,
-  handleRemove
+  handleRemove,
+  shared,
 }: {
   feature: GeoJSON.Feature;
   goTo: (properties: mapboxgl.EventData) => void;
   handleEdit: (feature: GeoJSON.Feature) => void;
   handleRemove: (uuid: string) => void
+  shared: boolean,
 }) {
 	const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 	const [dialogOpen, setDialogOpen] = useState(false);
@@ -56,13 +58,13 @@ export default function FeatureCard({
 					titleTypographyProps={{ component: "h2", variant: "h5" }}
 					subheader={ address ? address : "333 Harbord Street, Toronto, ON" }
           // subheaderTypographyProps={{ component: "h3", variant:"h6" }}
-					action={
-						<IconButton
-							aria-label="Options"
-							onClick={handleOpenMenu}>
-							<MoreVertIcon />
-						</IconButton>
-					}
+          action={ shared ? null : 
+            <IconButton
+              aria-label="Options"
+              onClick={handleOpenMenu}>
+              <MoreVertIcon />
+            </IconButton>
+          }
 				/>
 				<CardContent sx={{ paddingTop:0 }}>
 					{/* switch tags and address? */}

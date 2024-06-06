@@ -1,4 +1,4 @@
-import { ChangeEvent, useState } from "react";
+import { useState } from "react";
 import { addDoc, collection, doc, deleteDoc } from "firebase/firestore";
 import { v4 as uuid } from "uuid";
 
@@ -11,8 +11,9 @@ import Tooltip from "@mui/material/Tooltip";
 import { db } from "../firestore";
 
 import ShareDialog from "./ShareDialog";
+import { prxsFile } from "../variables";
 
-export default function SharingSwitch({geojsonData}:{geojsonData:GeoJSON.FeatureCollection}) {
+export default function SharingSwitch({geojsonData}:{geojsonData:prxsFile}) {
 
   const [sharing, setSharing] = useState(false);
   const [sharingID, setSharingID] = useState("");
@@ -38,7 +39,7 @@ export default function SharingSwitch({geojsonData}:{geojsonData:GeoJSON.Feature
 		}
   }
   
-  async function handleChange(e:ChangeEvent<HTMLInputElement>) {
+  async function handleChange(e:React.ChangeEvent<HTMLInputElement>) {
     // console.log("you flipped the switch!", "target:", e.target.checked, "state:", sharing);
     setSharing(e.target.checked)
     if (e.target.checked) shareMap();

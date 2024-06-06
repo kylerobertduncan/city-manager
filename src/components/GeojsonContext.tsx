@@ -1,7 +1,7 @@
 import { createContext, useContext, useReducer } from "react";
 import { bbox, centerOfMass } from "@turf/turf";
 import { getLocalStorage } from "../modules/localStorage";
-import { emptyFeatureCollection, featureProperties } from "../variables";
+import { emptyFeatureCollection, featureProperties, prxsFile } from "../variables";
 
 interface actionType {
   geometry?: GeoJSON.Point | GeoJSON.Polygon,
@@ -15,7 +15,7 @@ const GeojsonContext = createContext(emptyFeatureCollection);
 const GeojsonDispatchContext = createContext<(a: actionType) => void>(null!);
 
 const localData = getLocalStorage();
-const initialData: GeoJSON.FeatureCollection = localData ? localData : emptyFeatureCollection;
+const initialData: prxsFile = localData ? localData : emptyFeatureCollection;
 
 function createInitialData() {
   const localData = getLocalStorage();
