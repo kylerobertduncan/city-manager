@@ -1,12 +1,6 @@
 // import material ui components
-// import { Theme, useTheme } from '@mui/material/styles';
-import Box from '@mui/material/Box';
-import OutlinedInput from '@mui/material/OutlinedInput';
-import InputLabel from '@mui/material/InputLabel';
-import MenuItem from '@mui/material/MenuItem';
-import Select, { SelectChangeEvent } from '@mui/material/Select';
+import Autocomplete from '@mui/material/Autocomplete';
 import Chip from '@mui/material/Chip';
-import { FormControl } from '@mui/material';
 import Button from "@mui/material/Button";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
@@ -18,17 +12,6 @@ import { MuiColorInput } from "mui-color-input";
 import { useState } from "react";
 import { v4 as uuid } from "uuid";
 import { featureTags, featureProperties, emptyFeatureProperties } from "../variables";
-
-const ITEM_HEIGHT = 48;
-const ITEM_PADDING_TOP = 8;
-const MenuProps = {
-  PaperProps: {
-    style: {
-      maxHeight: ITEM_HEIGHT * 7 + ITEM_PADDING_TOP,
-      // width: 250,
-    },
-  },
-};
 
 export default function FeatureDialog({
   geometry,
@@ -76,16 +59,6 @@ export default function FeatureDialog({
 		closeDialog();
 	}
 
-  const updateChips = (event: SelectChangeEvent<typeof properties.tags>) => {
-    const {
-      target: { value },
-    } = event;
-    setProperties({
-      ...properties,
-      tags: typeof value === 'string' ? value.split(',') : value,
-    })
-  };
-
 	return (
 		<Dialog
 			onClose={closeDialog}
@@ -104,36 +77,38 @@ export default function FeatureDialog({
 					value={properties.name}
 					onChange={updateProperties}
 				/>
-        <FormControl margin="dense" sx={{ width:"100% "}}>
-          <InputLabel id="tags-label">Chips</InputLabel>
-          <Select
-            name="tags"
-            fullWidth
-            labelId="tags-label"
-            id="tags"
-            multiple
-            value={properties.tags}
-            onChange={updateChips}
-            input={<OutlinedInput id="select-multiple-tags" label="Tags" />}
-            renderValue={(selected) => (
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                {selected.map((value) => (
-                  <Chip key={value} label={value} />
-                ))}
-              </Box>
-            )}
-            MenuProps={MenuProps}
-          >
-            {featureTags.map((name) => (
-              <MenuItem
-                key={name}
-                value={name}
-              >
-                {name}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+        <Autocomplete
+          defaultValue={properties.tags}
+          freeSolo
+          id="tags-filled"
+          multiple
+          onChange={(_, newValue) => {
+            setProperties({
+              ...properties,
+              tags: newValue,
+            })
+          }}
+          options={featureTags.map((t) => t)}
+          renderTags={(value: readonly string[], getTagProps) =>
+            value.map((option: string, index: number) => {
+              const { key, ...tagProps } = getTagProps({ index });
+              return (
+                <Chip variant="outlined" label={option} key={key} {...tagProps} />
+              );
+            })
+          }
+          selectOnFocus
+          clearOnBlur
+          handleHomeEndKeys
+          renderInput={(params) => (
+            <TextField
+              label="Tags"
+              margin="dense"
+              placeholder="add tags..."
+              {...params}
+            />
+          )}
+        />
 				<TextField
 					margin="dense"
 					id="byline"
